@@ -106,6 +106,6 @@ export function parseClients(raw) {
   if (!raw || !raw.trim()) return [];
   return raw
     .split(/[,\/;]+/)
-    .map(s => s.trim())
+    .map(s => s.replace(/^Sub-/i, '').trim())
     .filter(s => s.length > 0 && s.toLowerCase() !== 'nan');
 }
