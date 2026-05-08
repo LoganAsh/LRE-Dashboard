@@ -1,41 +1,188 @@
-import { useState, useMemo } from 'react';
-import { fmtFull$, classifyStatus, YEARS } from './utils.js';
+import { useState, useMemo, useCallback } from 'react';
+import { supabase } from './supabase.js';
+import { fmtFull$, fmt$, classifyStatus, YEARS } from './utils.js';
 
 const PAGE_SIZE = 25;
+
 const COLS = [
-  { key: 'bid_date', label: 'Date' },
-  { key: 'name', label: 'Project' },
-  { key: 'client', label: 'Client' },
-  { key: 'bid_amount', label: 'Bid Amount', right: true },
-  { key: 'margin_pct', label: 'Margin %', right: true },
-  { key: 'status', label: 'Status' },
-  { key: 'notes', label: 'Notes' },
+  { key: 'bid_date',           label: 'Date',           right: false },
+  { key: 'name',               label: 'Project',         right: false },
+  { key: 'client',             label: 'Client',          right: false },
+  { key: 'bid_amount',         label: 'Bid Amount',      right: true  },
+  { key: 'award_amount',       label: 'Award',           right: true  },
+  { key: 'margin_pct',         label: 'Margin %',        right: true  },
+  { key: 'projected_overhead', label: 'Overhead (7.5%)', right: true  },
+  { key: 'projected_profit',   label: 'Net Profit',      right: true  },
+  { key: 'effective_status',   label: 'Status',          right: false },
 ];
 
-export default function BidLog({ bids }) {
-  const [search, setSearch] = useState('');
+function StatusModal({ bid, onClose, onSave }) {
+  const [status, setStatus]             = useState(bid.status_override || bid.status || 'Pending');
+  const [notes, setNotes]               = useState(bid.user_notes || '');
+  const [awardAmt, setAwardAmt]         = useState(bid.award_amount ?? '');
+  const [lastFollowup, setLastFollowup] = useState(bid.last_followup_date || '');
+  const [nextFollowup, setNextFollowup] = useState(bid.next_followup_date || '');
+  const [saving, setSaving]             = useState(false);
+  const [error, setError]               = useState('');
+
+  const today = new Date().toISOString().split('T')[0];
+  const setNextPreset = (days) => {
+    const d = new Date(); d.setDate(d.getDate() + days);
+    setNextFollowup(d.toISOString().split('T')[0]);
+  };
+
+  const awardNum = awardAmt !== '' ? parseFloat(awardAmt) : null;
+  const baseVal  = (awardNum && awardNum > 0) ? awardNum : (bid.bid_amount ?? 0);
+  const overhead = baseVal * 0.075;
+  const profit   = (baseVal * (bid.margin_pct ?? 0)) - overhead;
+
+  const handleSave = async () => {
+    setSaving(true); setError('');
+    const { error: err } = await supabase.from('lre_bids').update({
+      status_override: status, user_notes: notes || null,
+      award_amount: awardNum, last_followup_date: lastFollowup || null,
+      next_followup_date: nextFollowup || null,
+    }).eq('id', bid.id);
+    setSaving(false);
+    if (err) { setError(err.message); return; }
+    onSave({ ...bid, status_override: status, effective_status: status, user_notes: notes,
+      award_amount: awardNum, last_followup_date: lastFollowup || null,
+      next_followup_date: nextFollowup || null, projected_overhead: overhead, projected_profit: profit });
+    onClose();
+  };
+
+  const field = {
+    width: '100%', padding: '7px 10px', background: 'var(--surface)',
+    border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text)',
+    fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', boxSizing: 'border-box',
+  };
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={{
+      position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+    }}>
+      <div style={{
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10,
+        width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+      }}>
+        <div style={{
+          padding: '16px 20px', borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+          position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1,
+        }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, marginBottom: 3 }}>{bid.name}</div>
+            <div style={{ color: 'var(--muted)', fontSize: 11 }}>{bid.client} · {bid.bid_date} · {bid.year}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
+        </div>
+        <div style={{ padding: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+            {[['Bid Amount', fmtFull$(bid.bid_amount ?? 0)], ['Margin %', `${((bid.margin_pct ?? 0) * 100).toFixed(1)}%`], ['Cost', fmtFull$(bid.cost ?? 0)]].map(([l, v]) => (
+              <div key={l} style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
+                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{l}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+            <div style={{ background: 'rgba(232,92,80,0.1)', border: '1px solid rgba(232,92,80,0.2)', borderRadius: 6, padding: '10px 12px' }}>
+              <div style={{ fontSize: 9, color: 'var(--lost)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Overhead (7.5%)</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--lost)' }}>{fmt$(overhead)}</div>
+            </div>
+            <div style={{ background: profit >= 0 ? 'rgba(46,189,126,0.1)' : 'rgba(232,92,80,0.1)', border: `1px solid ${profit >= 0 ? 'rgba(46,189,126,0.2)' : 'rgba(232,92,80,0.2)'}`, borderRadius: 6, padding: '10px 12px' }}>
+              <div style={{ fontSize: 9, color: profit >= 0 ? 'var(--won)' : 'var(--lost)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Net Profit</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: profit >= 0 ? 'var(--won)' : 'var(--lost)' }}>{fmt$(profit)}</div>
+            </div>
+          </div>
+          {bid.notes && (
+            <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px', marginBottom: 14, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+              <span style={{ color: 'var(--text)', fontWeight: 500 }}>Bid Notes: </span>{bid.notes}
+            </div>
+          )}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Award Amount <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(updates overhead & profit)</span></label>
+            <input type="number" placeholder="Enter award amount if won…" value={awardAmt} onChange={e => setAwardAmt(e.target.value)} style={field} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Status</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {['Won', 'Pending', 'Lost'].map(s => {
+                const active = status === s;
+                const col = s === 'Won' ? 'var(--won)' : s === 'Lost' ? 'var(--lost)' : 'var(--accent)';
+                const bg  = s === 'Won' ? 'rgba(46,189,126,0.15)' : s === 'Lost' ? 'rgba(232,92,80,0.15)' : 'var(--accent-light)';
+                return <button key={s} onClick={() => setStatus(s)} style={{ flex: 1, padding: '8px 0', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s' }}>{s}</button>;
+              })}
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Notes</label>
+            <textarea placeholder="Add notes…" value={notes} onChange={e => setNotes(e.target.value)} rows={3} style={{ ...field, resize: 'vertical', lineHeight: 1.6 }} />
+          </div>
+          <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: 14, marginBottom: 18 }}>
+            <div style={{ fontSize: 10, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: 12 }}>Follow-Up</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Last Follow-Up</label>
+                <input type="date" value={lastFollowup} onChange={e => setLastFollowup(e.target.value)} style={{ ...field, colorScheme: 'dark' }} />
+                <button onClick={() => setLastFollowup(today)} style={{ marginTop: 5, fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)' }}>Set to today</button>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Next Follow-Up</label>
+                <input type="date" value={nextFollowup} onChange={e => setNextFollowup(e.target.value)} style={{ ...field, colorScheme: 'dark' }} />
+                <div style={{ display: 'flex', gap: 4, marginTop: 5 }}>
+                  {[['1 Wk', 7], ['2 Wks', 14], ['1 Mo', 30]].map(([label, days]) => (
+                    <button key={label} onClick={() => setNextPreset(days)} style={{ fontSize: 10, padding: '3px 8px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>{label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          {error && <div style={{ color: 'var(--lost)', fontSize: 12, marginBottom: 10 }}>{error}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '9px 0', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '9px 0', background: 'var(--accent)', border: 'none', borderRadius: 4, color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Save Changes'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function BidLog({ bids: initialBids }) {
+  const [bids, setBids]                 = useState(initialBids);
+  const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [sortKey, setSortKey] = useState('bid_date');
-  const [sortDir, setSortDir] = useState(-1);
-  const [page, setPage] = useState(1);
+  const [yearFilter, setYearFilter]     = useState('');
+  const [sortKey, setSortKey]           = useState('bid_date');
+  const [sortDir, setSortDir]           = useState(-1);
+  const [page, setPage]                 = useState(1);
+  const [modalBid, setModalBid]         = useState(null);
+
+  useMemo(() => setBids(initialBids), [initialBids]);
+
+  const handleSave = useCallback((updated) => {
+    setBids(prev => prev.map(b => b.id === updated.id ? updated : b));
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return bids
       .filter(b => b.bid_amount > 0)
       .filter(b => !q || b.name?.toLowerCase().includes(q) || b.client?.toLowerCase().includes(q))
-      .filter(b => !statusFilter || b.status === statusFilter)
+      .filter(b => !statusFilter || (b.effective_status || b.status) === statusFilter)
       .filter(b => !yearFilter || b.year === yearFilter)
       .sort((a, b) => {
-        let av = a[sortKey], bv = b[sortKey];
-        if (typeof av === 'string') return sortDir * (av ?? '').localeCompare(bv ?? '');
-        return sortDir * ((av ?? 0) - (bv ?? 0));
+        let av = a[sortKey] ?? 0, bv = b[sortKey] ?? 0;
+        if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+        return sortDir * (av - bv);
       });
   }, [bids, search, statusFilter, yearFilter, sortKey, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageData   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir(d => d * -1);
@@ -43,91 +190,86 @@ export default function BidLog({ bids }) {
     setPage(1);
   };
 
-  const handleFilter = (setter) => (e) => { setter(e.target.value); setPage(1); };
-
   const paginationItems = useMemo(() => {
     const items = [];
     for (let i = 1; i <= totalPages; i++) {
-      if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) {
-        items.push({ type: 'page', num: i });
-      } else if (Math.abs(i - page) === 2) {
-        items.push({ type: 'ellipsis', num: i });
-      }
+      if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) items.push({ type: 'page', num: i });
+      else if (Math.abs(i - page) === 2) items.push({ type: 'ellipsis', num: i });
     }
-    // Dedupe ellipses
-    return items.filter((item, idx) => !(item.type === 'ellipsis' && items[idx - 1]?.type === 'ellipsis'));
+    return items.filter((it, idx) => !(it.type === 'ellipsis' && items[idx - 1]?.type === 'ellipsis'));
   }, [page, totalPages]);
 
   return (
     <div className="page">
+      {modalBid && <StatusModal bid={modalBid} onClose={() => setModalBid(null)} onSave={handleSave} />}
       <div className="table-controls">
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Search project or client…"
-          value={search}
-          onChange={handleFilter(setSearch)}
-        />
-        <select className="select-filter" value={statusFilter} onChange={handleFilter(setStatusFilter)}>
+        <input className="search-input" type="text" placeholder="Search project or client…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+        <select className="select-filter" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
           <option value="">All Statuses</option>
           <option value="Won">Won</option>
           <option value="Lost">Lost</option>
           <option value="Pending">Pending</option>
           <option value="No Bid">No Bid</option>
         </select>
-        <select className="select-filter" value={yearFilter} onChange={handleFilter(setYearFilter)}>
+        <select className="select-filter" value={yearFilter} onChange={e => { setYearFilter(e.target.value); setPage(1); }}>
           <option value="">All Years</option>
           {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
         <span className="table-count">{filtered.length} bids</span>
       </div>
-
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
               {COLS.map(col => (
-                <th
-                  key={col.key}
-                  className={sortKey === col.key ? 'sorted' : ''}
-                  style={col.right ? { textAlign: 'right' } : {}}
-                  onClick={() => handleSort(col.key)}
-                >
+                <th key={col.key} className={sortKey === col.key ? 'sorted' : ''} style={col.right ? { textAlign: 'right' } : {}} onClick={() => handleSort(col.key)}>
                   {col.label} <span style={{ opacity: sortKey === col.key ? 1 : 0.3 }}>{sortKey === col.key ? (sortDir > 0 ? '↑' : '↓') : '↕'}</span>
                 </th>
               ))}
+              <th style={{ width: 90, textAlign: 'center' }}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {pageData.map((b, i) => (
-              <tr key={b.id ?? i}>
-                <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>{b.bid_date ?? '—'}</td>
-                <td style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.name}>{b.name}</td>
-                <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>{b.client}</td>
-                <td className="amount-cell">{fmtFull$(b.bid_amount)}</td>
-                <td>
-                  <div className="margin-bar">
-                    <div className="margin-mini">
-                      <div className="margin-fill" style={{ width: `${Math.min((b.margin_pct ?? 0) * 100 / 0.30, 100)}%` }} />
-                    </div>
-                    <span style={{ color: 'var(--muted)' }}>{((b.margin_pct ?? 0) * 100).toFixed(1)}%</span>
-                  </div>
-                </td>
-                <td><span className={`status-pill ${classifyStatus(b.status)}`}>{b.status}</span></td>
-                <td style={{ color: 'var(--muted)', fontSize: 11, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.notes}>{b.notes}</td>
-              </tr>
-            ))}
+            {pageData.map((b, i) => {
+              const effStatus = b.effective_status || b.status;
+              const awardVal  = b.award_amount ?? 0;
+              const baseVal   = awardVal > 0 ? awardVal : (b.bid_amount ?? 0);
+              const overhead  = baseVal * 0.075;
+              const profit    = (baseVal * (b.margin_pct ?? 0)) - overhead;
+              const overdue   = b.next_followup_date && new Date(b.next_followup_date) <= new Date();
+              return (
+                <tr key={b.id ?? i} style={overdue ? { background: 'rgba(232,197,71,0.04)' } : {}}>
+                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 12 }}>
+                    {b.bid_date ?? '—'}{overdue && <span title={`Follow-up due: ${b.next_followup_date}`} style={{ marginLeft: 5, color: '#e8c547', fontSize: 9 }}>●</span>}
+                  </td>
+                  <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.name}>
+                    {b.name}{b.user_notes && <span title={b.user_notes} style={{ marginLeft: 5, color: 'var(--accent)', fontSize: 10 }}>✎</span>}
+                  </td>
+                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{b.client}</td>
+                  <td className="amount-cell" style={{ fontSize: 12 }}>{fmtFull$(b.bid_amount ?? 0)}</td>
+                  <td className="amount-cell" style={{ fontSize: 12, color: awardVal > 0 ? 'var(--won)' : 'var(--muted)' }}>{awardVal > 0 ? fmtFull$(awardVal) : '—'}</td>
+                  <td className="amount-cell" style={{ fontSize: 12 }}>{((b.margin_pct ?? 0) * 100).toFixed(1)}%</td>
+                  <td className="amount-cell" style={{ fontSize: 12, color: 'var(--lost)' }}>{fmt$(overhead)}</td>
+                  <td className="amount-cell" style={{ fontSize: 12, fontWeight: 500, color: profit >= 0 ? 'var(--won)' : 'var(--lost)' }}>{fmt$(profit)}</td>
+                  <td><span className={`status-pill ${classifyStatus(effStatus)}`}>{effStatus}</span></td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button onClick={() => setModalBid(b)}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                      style={{ padding: '4px 10px', fontSize: 11, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-mono)', transition: 'border-color 0.15s' }}>Status ↗</button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-
       {totalPages > 1 && (
         <div className="pagination">
           {page > 1 && <button className="page-btn" onClick={() => setPage(p => p - 1)}>‹</button>}
           {paginationItems.map((item, i) =>
-            item.type === 'ellipsis'
-              ? <span key={i} className="page-ellipsis">…</span>
-              : <button key={item.num} className={`page-btn ${item.num === page ? 'active' : ''}`} onClick={() => setPage(item.num)}>{item.num}</button>
+            item.type === 'ellipsis' ? <span key={i} className="page-ellipsis">…</span>
+            : <button key={item.num} className={`page-btn ${item.num === page ? 'active' : ''}`} onClick={() => setPage(item.num)}>{item.num}</button>
           )}
           {page < totalPages && <button className="page-btn" onClick={() => setPage(p => p + 1)}>›</button>}
         </div>

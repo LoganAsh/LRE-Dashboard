@@ -13,7 +13,7 @@ export function useBids() {
     try {
       // Fetch all bids
       const { data, error: err } = await supabase
-        .from('lre_bids')
+        .from('lre_bids_view')
         .select('*')
         .order('bid_date', { ascending: false });
       if (err) throw err;
