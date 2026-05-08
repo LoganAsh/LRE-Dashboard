@@ -5,17 +5,17 @@ import { fmtFull$, fmt$, classifyStatus, YEARS } from './utils.js';
 const PAGE_SIZE = 25;
 
 const COLS = [
-  { key: 'bid_date',           label: 'Date',           right: false },
-  { key: 'name',               label: 'Project',         right: false },
-  { key: 'client',             label: 'Client',          right: false },
-  { key: 'bid_amount',         label: 'Bid Amount',      right: true  },
-  { key: 'award_amount',       label: 'Award',           right: true  },
-  { key: 'margin_pct',         label: 'Margin %',        right: true  },
-  { key: 'projected_overhead', label: 'Overhead (7.5%)', right: true  },
-  { key: 'projected_profit',   label: 'Net Profit',      right: true  },
-  { key: 'effective_status',   label: 'Status',          right: false },
+  { key: 'bid_date',         label: 'Date',        right: false },
+  { key: 'name',             label: 'Project',      right: false },
+  { key: 'client',           label: 'Client',       right: false },
+  { key: 'bid_amount',       label: 'Bid Amount',   right: true  },
+  { key: 'award_amount',     label: 'Award',        right: true  },
+  { key: 'margin_pct',       label: 'Margin %',     right: true  },
+  { key: 'projected_profit', label: 'Profit + OH',  right: true  },
+  { key: 'effective_status', label: 'Status',       right: false },
 ];
 
+// ── Status Modal ──────────────────────────────────────────────────────────────
 function StatusModal({ bid, onClose, onSave }) {
   const [status, setStatus]             = useState(bid.status_override || bid.status || 'Pending');
   const [notes, setNotes]               = useState(bid.user_notes || '');
@@ -33,8 +33,7 @@ function StatusModal({ bid, onClose, onSave }) {
 
   const awardNum = awardAmt !== '' ? parseFloat(awardAmt) : null;
   const baseVal  = (awardNum && awardNum > 0) ? awardNum : (bid.bid_amount ?? 0);
-  const overhead = baseVal * 0.075;
-  const profit   = (baseVal * (bid.margin_pct ?? 0)) - overhead;
+  const profit   = baseVal * (bid.margin_pct ?? 0);
 
   const handleSave = async () => {
     setSaving(true); setError('');
@@ -47,7 +46,7 @@ function StatusModal({ bid, onClose, onSave }) {
     if (err) { setError(err.message); return; }
     onSave({ ...bid, status_override: status, effective_status: status, user_notes: notes,
       award_amount: awardNum, last_followup_date: lastFollowup || null,
-      next_followup_date: nextFollowup || null, projected_overhead: overhead, projected_profit: profit });
+      next_followup_date: nextFollowup || null, projected_profit: profit });
     onClose();
   };
 
@@ -87,15 +86,9 @@ function StatusModal({ bid, onClose, onSave }) {
               </div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-            <div style={{ background: 'rgba(232,92,80,0.1)', border: '1px solid rgba(232,92,80,0.2)', borderRadius: 6, padding: '10px 12px' }}>
-              <div style={{ fontSize: 9, color: 'var(--lost)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Overhead (7.5%)</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--lost)' }}>{fmt$(overhead)}</div>
-            </div>
-            <div style={{ background: profit >= 0 ? 'rgba(46,189,126,0.1)' : 'rgba(232,92,80,0.1)', border: `1px solid ${profit >= 0 ? 'rgba(46,189,126,0.2)' : 'rgba(232,92,80,0.2)'}`, borderRadius: 6, padding: '10px 12px' }}>
-              <div style={{ fontSize: 9, color: profit >= 0 ? 'var(--won)' : 'var(--lost)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Net Profit</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: profit >= 0 ? 'var(--won)' : 'var(--lost)' }}>{fmt$(profit)}</div>
-            </div>
+          <div style={{ background: (awardNum && awardNum > 0) ? 'rgba(46,189,126,0.1)' : 'var(--surface2)', border: `1px solid ${(awardNum && awardNum > 0) ? 'rgba(46,189,126,0.2)' : 'var(--border)'}`, borderRadius: 6, padding: '10px 12px', marginBottom: 16 }}>
+            <div style={{ fontSize: 9, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Profit + OH {(awardNum && awardNum > 0) ? '(on award)' : '(on bid)'}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--text)' }}>{fmt$(profit)}</div>
           </div>
           {bid.notes && (
             <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px', marginBottom: 14, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -103,17 +96,17 @@ function StatusModal({ bid, onClose, onSave }) {
             </div>
           )}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Award Amount <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(updates overhead & profit)</span></label>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Award Amount <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(updates profit calculation)</span></label>
             <input type="number" placeholder="Enter award amount if won…" value={awardAmt} onChange={e => setAwardAmt(e.target.value)} style={field} />
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Status</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              {['Won', 'Pending', 'Lost'].map(s => {
+              {['Won', 'Pending', 'Lost', 'Upcoming'].map(s => {
                 const active = status === s;
-                const col = s === 'Won' ? 'var(--won)' : s === 'Lost' ? 'var(--lost)' : 'var(--accent)';
-                const bg  = s === 'Won' ? 'rgba(46,189,126,0.15)' : s === 'Lost' ? 'rgba(232,92,80,0.15)' : 'var(--accent-light)';
-                return <button key={s} onClick={() => setStatus(s)} style={{ flex: 1, padding: '8px 0', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s' }}>{s}</button>;
+                const col = s === 'Won' ? 'var(--won)' : s === 'Lost' ? 'var(--lost)' : s === 'Upcoming' ? '#a78bfa' : 'var(--accent)';
+                const bg  = s === 'Won' ? 'rgba(46,189,126,0.15)' : s === 'Lost' ? 'rgba(232,92,80,0.15)' : s === 'Upcoming' ? 'rgba(167,139,250,0.15)' : 'var(--accent-light)';
+                return <button key={s} onClick={() => setStatus(s)} style={{ flex: 1, padding: '8px 0', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s' }}>{s}</button>;
               })}
             </div>
           </div>
@@ -151,6 +144,7 @@ function StatusModal({ bid, onClose, onSave }) {
   );
 }
 
+// ── Main BidLog ───────────────────────────────────────────────────────────────
 export default function BidLog({ bids: initialBids }) {
   const [bids, setBids]                 = useState(initialBids);
   const [search, setSearch]             = useState('');
@@ -167,10 +161,23 @@ export default function BidLog({ bids: initialBids }) {
     setBids(prev => prev.map(b => b.id === updated.id ? updated : b));
   }, []);
 
+  // One week ago for filtering upcoming bids
+  const oneWeekAgo = useMemo(() => {
+    const d = new Date(); d.setDate(d.getDate() - 7);
+    return d.toISOString().split('T')[0];
+  }, []);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return bids
-      .filter(b => b.bid_amount > 0)
+      .filter(b => {
+        const effStatus = b.effective_status || b.status;
+        // Always include bids with amounts
+        if (b.bid_amount > 0) return true;
+        // For zero-amount bids (Upcoming), only show if date >= one week ago
+        if (effStatus === 'Upcoming' && b.bid_date && b.bid_date >= oneWeekAgo) return true;
+        return false;
+      })
       .filter(b => !q || b.name?.toLowerCase().includes(q) || b.client?.toLowerCase().includes(q))
       .filter(b => !statusFilter || (b.effective_status || b.status) === statusFilter)
       .filter(b => !yearFilter || b.year === yearFilter)
@@ -179,7 +186,7 @@ export default function BidLog({ bids: initialBids }) {
         if (typeof av === 'string') return sortDir * av.localeCompare(bv);
         return sortDir * (av - bv);
       });
-  }, [bids, search, statusFilter, yearFilter, sortKey, sortDir]);
+  }, [bids, search, statusFilter, yearFilter, sortKey, sortDir, oneWeekAgo]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -209,6 +216,7 @@ export default function BidLog({ bids: initialBids }) {
           <option value="Won">Won</option>
           <option value="Lost">Lost</option>
           <option value="Pending">Pending</option>
+          <option value="Upcoming">Upcoming</option>
           <option value="No Bid">No Bid</option>
         </select>
         <select className="select-filter" value={yearFilter} onChange={e => { setYearFilter(e.target.value); setPage(1); }}>
@@ -232,13 +240,22 @@ export default function BidLog({ bids: initialBids }) {
           <tbody>
             {pageData.map((b, i) => {
               const effStatus = b.effective_status || b.status;
+              const isWon     = effStatus === 'Won';
+              const isUpcoming = effStatus === 'Upcoming';
               const awardVal  = b.award_amount ?? 0;
               const baseVal   = awardVal > 0 ? awardVal : (b.bid_amount ?? 0);
-              const overhead  = baseVal * 0.075;
-              const profit    = (baseVal * (b.margin_pct ?? 0)) - overhead;
+              const profit    = baseVal * (b.margin_pct ?? 0);
               const overdue   = b.next_followup_date && new Date(b.next_followup_date) <= new Date();
+
+              // Row background
+              const rowBg = isWon
+                ? 'rgba(46,189,126,0.07)'
+                : overdue
+                ? 'rgba(232,197,71,0.04)'
+                : 'transparent';
+
               return (
-                <tr key={b.id ?? i} style={overdue ? { background: 'rgba(232,197,71,0.04)' } : {}}>
+                <tr key={b.id ?? i} style={{ background: rowBg }}>
                   <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 12 }}>
                     {b.bid_date ?? '—'}{overdue && <span title={`Follow-up due: ${b.next_followup_date}`} style={{ marginLeft: 5, color: '#e8c547', fontSize: 9 }}>●</span>}
                   </td>
@@ -246,12 +263,19 @@ export default function BidLog({ bids: initialBids }) {
                     {b.name}{b.user_notes && <span title={b.user_notes} style={{ marginLeft: 5, color: 'var(--accent)', fontSize: 10 }}>✎</span>}
                   </td>
                   <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{b.client}</td>
-                  <td className="amount-cell" style={{ fontSize: 12 }}>{fmtFull$(b.bid_amount ?? 0)}</td>
-                  <td className="amount-cell" style={{ fontSize: 12, color: awardVal > 0 ? 'var(--won)' : 'var(--muted)' }}>{awardVal > 0 ? fmtFull$(awardVal) : '—'}</td>
-                  <td className="amount-cell" style={{ fontSize: 12 }}>{((b.margin_pct ?? 0) * 100).toFixed(1)}%</td>
-                  <td className="amount-cell" style={{ fontSize: 12, color: 'var(--lost)' }}>{fmt$(overhead)}</td>
-                  <td className="amount-cell" style={{ fontSize: 12, fontWeight: 500, color: profit >= 0 ? 'var(--won)' : 'var(--lost)' }}>{fmt$(profit)}</td>
-                  <td><span className={`status-pill ${classifyStatus(effStatus)}`}>{effStatus}</span></td>
+                  <td className="amount-cell" style={{ fontSize: 12 }}>{b.bid_amount > 0 ? fmtFull$(b.bid_amount) : '—'}</td>
+                  <td className="amount-cell" style={{ fontSize: 12, color: awardVal > 0 ? 'var(--won)' : 'var(--muted)' }}>
+                    {awardVal > 0 ? fmtFull$(awardVal) : '—'}
+                  </td>
+                  <td className="amount-cell" style={{ fontSize: 12 }}>
+                    {b.margin_pct > 0 ? `${((b.margin_pct ?? 0) * 100).toFixed(1)}%` : '—'}
+                  </td>
+                  <td className="amount-cell" style={{ fontSize: 12, fontWeight: isWon ? 600 : 400, color: isWon ? 'var(--won)' : 'var(--muted)' }}>
+                    {b.margin_pct > 0 ? fmt$(profit) : '—'}
+                  </td>
+                  <td>
+                    <span className={`status-pill ${isUpcoming ? 'pill-upcoming' : classifyStatus(effStatus)}`}>{effStatus}</span>
+                  </td>
                   <td style={{ textAlign: 'center' }}>
                     <button onClick={() => setModalBid(b)}
                       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}

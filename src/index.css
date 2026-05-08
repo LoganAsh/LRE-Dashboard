@@ -186,6 +186,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .pill-lost { background: rgba(232,92,80,0.15); color: var(--lost); }
 .pill-pending { background: rgba(122,130,152,0.15); color: var(--pending); }
 .pill-nobid { background: rgba(58,63,82,0.3); color: var(--muted); }
+.pill-upcoming { background: rgba(167,139,250,0.15); color: #a78bfa; }
 
 .amount-cell { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
 .margin-bar { display: flex; align-items: center; gap: 6px; }
