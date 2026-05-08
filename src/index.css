@@ -15,6 +15,32 @@
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
+[data-theme="light"] {
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface2: #e8eaf2;
+  --border: #d0d4e0;
+  --accent: #3B6FE8;
+  --accent-light: rgba(59,111,232,0.1);
+  --won: #1a9e63;
+  --lost: #d94f45;
+  --pending: #6b7494;
+  --nobid: #c0c5d4;
+  --text: #1a1d2e;
+  --muted: #8289a0;
+}
+
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px;
+  cursor: pointer; transition: all 0.2s;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); letter-spacing: 0.04em;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--text); }
+.theme-toggle-icon { font-size: 14px; line-height: 1; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
