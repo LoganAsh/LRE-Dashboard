@@ -92,7 +92,7 @@ export function useTopClients(bids, n = 10) {
       if (!key) return;
       if (!clientMap[key]) clientMap[key] = { name: key, total: 0, count: 0 };
       // Divide bid amount equally across co-clients
-      clientMap[key].total += (b.bid_amount ?? 0) / names.length;
+      clientMap[key].total += b.bid_amount ?? 0;
       clientMap[key].count += 1;
     });
   });

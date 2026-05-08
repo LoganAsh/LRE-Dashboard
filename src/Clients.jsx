@@ -25,7 +25,7 @@ export default function Clients({ bids }) {
         const key = name.trim();
         if (!key) return;
         if (!map[key]) map[key] = { name: key, awarded: 0, count: 0 };
-        map[key].awarded += award / names.length;
+        map[key].awarded += award;
         map[key].count += 1;
       });
     });
