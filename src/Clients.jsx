@@ -23,7 +23,11 @@ export default function Clients({ bids }) {
       const effStatus = b.effective_status || b.status;
       const award = b.award_amount ?? 0;
       if (effStatus !== 'Won' || award <= 0) return;
-      const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+      // If awarded_by is set, credit only that client
+      // Otherwise fall back to all parsed clients
+      const names = b.awarded_by
+        ? [b.awarded_by]
+        : (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
       if (names.length === 0) return;
       names.forEach(name => {
         const key = name.trim();

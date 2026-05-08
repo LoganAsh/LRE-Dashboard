@@ -38,6 +38,8 @@ function StatusModal({ bid, onClose, onSave }) {
   const [status, setStatus]             = useState(bid.status_override || bid.status || 'Pending');
   const [notes, setNotes]               = useState(bid.user_notes || '');
   const [awardAmt, setAwardAmt]         = useState(bid.award_amount ?? '');
+  const clientNames = (bid.clients && bid.clients.length > 0) ? bid.clients : parseClients(bid.client || '');
+  const [awardedBy, setAwardedBy]       = useState(bid.awarded_by || (clientNames.length === 1 ? clientNames[0] : ''));
   const [lastFollowup, setLastFollowup] = useState(bid.last_followup_date || '');
   const [nextFollowup, setNextFollowup] = useState(bid.next_followup_date || '');
   const [saving, setSaving]             = useState(false);
@@ -59,12 +61,14 @@ function StatusModal({ bid, onClose, onSave }) {
       status_override: status, user_notes: notes || null,
       award_amount: awardNum, last_followup_date: lastFollowup || null,
       next_followup_date: nextFollowup || null,
+      awarded_by: status === 'Won' ? (awardedBy || null) : null,
     }).eq('id', bid.id);
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSave({ ...bid, status_override: status, effective_status: status, user_notes: notes,
       award_amount: awardNum, last_followup_date: lastFollowup || null,
-      next_followup_date: nextFollowup || null, projected_profit: profit });
+      next_followup_date: nextFollowup || null, projected_profit: profit,
+      awarded_by: status === 'Won' ? (awardedBy || null) : null });
     onClose();
   };
 
@@ -130,6 +134,23 @@ function StatusModal({ bid, onClose, onSave }) {
               })}
             </div>
           </div>
+          {status === 'Won' && (
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                Awarded By {clientNames.length > 1 && <span style={{ color: 'var(--lost)' }}>*required</span>}
+              </label>
+              {clientNames.length === 1 ? (
+                <div style={{ padding: '7px 10px', background: 'rgba(46,189,126,0.1)', border: '1px solid rgba(46,189,126,0.3)', borderRadius: 4, color: 'var(--won)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                  {clientNames[0]}
+                </div>
+              ) : (
+                <select value={awardedBy} onChange={e => setAwardedBy(e.target.value)} style={{ ...field, color: awardedBy ? 'var(--text)' : 'var(--muted)', borderColor: !awardedBy ? 'var(--lost)' : 'var(--border)' }}>
+                  <option value="">— Select awarding client —</option>
+                  {clientNames.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              )}
+            </div>
+          )}
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Notes</label>
             <textarea placeholder="Add notes…" value={notes} onChange={e => setNotes(e.target.value)} rows={3} style={{ ...field, resize: 'vertical', lineHeight: 1.6 }} />
@@ -156,7 +177,7 @@ function StatusModal({ bid, onClose, onSave }) {
           {error && <div style={{ color: 'var(--lost)', fontSize: 12, marginBottom: 10 }}>{error}</div>}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={onClose} style={{ flex: 1, padding: '9px 0', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '9px 0', background: 'var(--accent)', border: 'none', borderRadius: 4, color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Save Changes'}</button>
+            <button onClick={handleSave} disabled={saving || (status === 'Won' && clientNames.length > 1 && !awardedBy)} style={{ flex: 2, padding: '9px 0', background: 'var(--accent)', border: 'none', borderRadius: 4, color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, cursor: (saving || (status === 'Won' && clientNames.length > 1 && !awardedBy)) ? 'not-allowed' : 'pointer', opacity: (saving || (status === 'Won' && clientNames.length > 1 && !awardedBy)) ? 0.5 : 1 }}>{saving ? 'Saving…' : 'Save Changes'}</button>
           </div>
         </div>
       </div>
