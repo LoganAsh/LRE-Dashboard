@@ -129,6 +129,69 @@ function BidCard({ bid, onTogglePriority, onNotBidding }) {
           )}
         </div>
       </div>
+
+      {/* Not Bidding toggle + list */}
+      <div style={{ marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+        <button
+          onClick={() => setShowNotBidding(v => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, background: 'none',
+            border: '1px solid var(--border)', borderRadius: 6, padding: '7px 14px',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--muted)', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+        >
+          <span style={{ fontSize: 11 }}>{showNotBidding ? '▲' : '▼'}</span>
+          Not Bidding
+          <span style={{ padding: '1px 7px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 11 }}>{notBiddingBids.length}</span>
+        </button>
+
+        {showNotBidding && notBiddingBids.length > 0 && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notBiddingBids.map(b => {
+              const clientNames = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+              return (
+                <div key={b.id} style={{
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderLeft: '3px solid var(--muted)', borderRadius: 8,
+                  padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12,
+                  opacity: 0.7,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{b.name}</span>
+                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{b.bid_date}</span>
+                      {b.bid_time && <span style={{ fontSize: 10, color: 'var(--muted)' }}>🕐 {b.bid_time}</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {clientNames.map(c => (
+                        <span key={c} style={{ padding: '1px 5px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 10 }}>{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleUndoNotBidding(b)}
+                    title="Move back to Upcoming"
+                    style={{
+                      padding: '3px 10px', fontSize: 11, fontFamily: 'var(--font-mono)',
+                      background: 'var(--surface2)', border: '1px solid var(--border)',
+                      borderRadius: 4, color: 'var(--muted)', cursor: 'pointer',
+                      transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--won)'; e.currentTarget.style.color = 'var(--won)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+                  >↩ Restore</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {showNotBidding && notBiddingBids.length === 0 && (
+          <div style={{ marginTop: 12, color: 'var(--muted)', fontSize: 12 }}>No bids marked as Not Bidding.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -177,6 +240,69 @@ function PreBidCard({ bid }) {
           </div>
         </div>
       </div>
+
+      {/* Not Bidding toggle + list */}
+      <div style={{ marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+        <button
+          onClick={() => setShowNotBidding(v => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, background: 'none',
+            border: '1px solid var(--border)', borderRadius: 6, padding: '7px 14px',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--muted)', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+        >
+          <span style={{ fontSize: 11 }}>{showNotBidding ? '▲' : '▼'}</span>
+          Not Bidding
+          <span style={{ padding: '1px 7px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 11 }}>{notBiddingBids.length}</span>
+        </button>
+
+        {showNotBidding && notBiddingBids.length > 0 && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notBiddingBids.map(b => {
+              const clientNames = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+              return (
+                <div key={b.id} style={{
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderLeft: '3px solid var(--muted)', borderRadius: 8,
+                  padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12,
+                  opacity: 0.7,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{b.name}</span>
+                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{b.bid_date}</span>
+                      {b.bid_time && <span style={{ fontSize: 10, color: 'var(--muted)' }}>🕐 {b.bid_time}</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {clientNames.map(c => (
+                        <span key={c} style={{ padding: '1px 5px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 10 }}>{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleUndoNotBidding(b)}
+                    title="Move back to Upcoming"
+                    style={{
+                      padding: '3px 10px', fontSize: 11, fontFamily: 'var(--font-mono)',
+                      background: 'var(--surface2)', border: '1px solid var(--border)',
+                      borderRadius: 4, color: 'var(--muted)', cursor: 'pointer',
+                      transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--won)'; e.currentTarget.style.color = 'var(--won)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+                  >↩ Restore</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {showNotBidding && notBiddingBids.length === 0 && (
+          <div style={{ marginTop: 12, color: 'var(--muted)', fontSize: 12 }}>No bids marked as Not Bidding.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -187,6 +313,69 @@ function SectionHeader({ title, count, color }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--text)' }}>{title}</div>
       <div style={{ padding: '2px 8px', background: (color || 'var(--accent)') + '22', border: `1px solid ${color || 'var(--accent)'}55`, borderRadius: 10, fontSize: 11, color: color || 'var(--accent)', fontWeight: 600 }}>{count}</div>
+
+      {/* Not Bidding toggle + list */}
+      <div style={{ marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+        <button
+          onClick={() => setShowNotBidding(v => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, background: 'none',
+            border: '1px solid var(--border)', borderRadius: 6, padding: '7px 14px',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--muted)', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+        >
+          <span style={{ fontSize: 11 }}>{showNotBidding ? '▲' : '▼'}</span>
+          Not Bidding
+          <span style={{ padding: '1px 7px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 11 }}>{notBiddingBids.length}</span>
+        </button>
+
+        {showNotBidding && notBiddingBids.length > 0 && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notBiddingBids.map(b => {
+              const clientNames = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+              return (
+                <div key={b.id} style={{
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderLeft: '3px solid var(--muted)', borderRadius: 8,
+                  padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12,
+                  opacity: 0.7,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{b.name}</span>
+                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{b.bid_date}</span>
+                      {b.bid_time && <span style={{ fontSize: 10, color: 'var(--muted)' }}>🕐 {b.bid_time}</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {clientNames.map(c => (
+                        <span key={c} style={{ padding: '1px 5px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 10 }}>{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleUndoNotBidding(b)}
+                    title="Move back to Upcoming"
+                    style={{
+                      padding: '3px 10px', fontSize: 11, fontFamily: 'var(--font-mono)',
+                      background: 'var(--surface2)', border: '1px solid var(--border)',
+                      borderRadius: 4, color: 'var(--muted)', cursor: 'pointer',
+                      transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--won)'; e.currentTarget.style.color = 'var(--won)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+                  >↩ Restore</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {showNotBidding && notBiddingBids.length === 0 && (
+          <div style={{ marginTop: 12, color: 'var(--muted)', fontSize: 12 }}>No bids marked as Not Bidding.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -194,6 +383,7 @@ function SectionHeader({ title, count, color }) {
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function BidDashboard({ bids: initialBids }) {
   const [bids, setBids] = useState(initialBids);
+  const [showNotBidding, setShowNotBidding] = useState(false);
 
   // Keep in sync with parent refetch
   useMemo(() => setBids(initialBids), [initialBids]);
@@ -228,10 +418,27 @@ export default function BidDashboard({ bids: initialBids }) {
       .sort((a, b) => a.pre_bid.localeCompare(b.pre_bid));
   }, [bids]);
 
+  // Bids manually marked Not Bidding (status_override = 'No Bid'), date >= one week ago
+  const notBiddingBids = useMemo(() => {
+    return bids
+      .filter(b => {
+        if (b.status_override !== 'No Bid') return false;
+        if (!b.bid_date) return false;
+        const d = new Date(b.bid_date + 'T00:00:00');
+        return d >= oneWeekAgo;
+      })
+      .sort((a, b) => a.bid_date.localeCompare(b.bid_date));
+  }, [bids]);
+
   const handleTogglePriority = async (bid) => {
     const newVal = !bid.high_priority;
     const { error } = await supabase.from('lre_bids').update({ high_priority: newVal }).eq('id', bid.id);
     if (!error) setBids(prev => prev.map(b => b.id === bid.id ? { ...b, high_priority: newVal } : b));
+  };
+
+  const handleUndoNotBidding = async (bid) => {
+    const { error } = await supabase.from('lre_bids').update({ status_override: null }).eq('id', bid.id);
+    if (!error) setBids(prev => prev.map(b => b.id === bid.id ? { ...b, status_override: null, effective_status: b.status } : b));
   };
 
   const handleNotBidding = async (bid) => {
@@ -288,6 +495,69 @@ export default function BidDashboard({ bids: initialBids }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Not Bidding toggle + list */}
+      <div style={{ marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+        <button
+          onClick={() => setShowNotBidding(v => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, background: 'none',
+            border: '1px solid var(--border)', borderRadius: 6, padding: '7px 14px',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--muted)', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+        >
+          <span style={{ fontSize: 11 }}>{showNotBidding ? '▲' : '▼'}</span>
+          Not Bidding
+          <span style={{ padding: '1px 7px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 11 }}>{notBiddingBids.length}</span>
+        </button>
+
+        {showNotBidding && notBiddingBids.length > 0 && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notBiddingBids.map(b => {
+              const clientNames = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+              return (
+                <div key={b.id} style={{
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderLeft: '3px solid var(--muted)', borderRadius: 8,
+                  padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12,
+                  opacity: 0.7,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{b.name}</span>
+                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{b.bid_date}</span>
+                      {b.bid_time && <span style={{ fontSize: 10, color: 'var(--muted)' }}>🕐 {b.bid_time}</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {clientNames.map(c => (
+                        <span key={c} style={{ padding: '1px 5px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 10 }}>{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleUndoNotBidding(b)}
+                    title="Move back to Upcoming"
+                    style={{
+                      padding: '3px 10px', fontSize: 11, fontFamily: 'var(--font-mono)',
+                      background: 'var(--surface2)', border: '1px solid var(--border)',
+                      borderRadius: 4, color: 'var(--muted)', cursor: 'pointer',
+                      transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--won)'; e.currentTarget.style.color = 'var(--won)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+                  >↩ Restore</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {showNotBidding && notBiddingBids.length === 0 && (
+          <div style={{ marginTop: 12, color: 'var(--muted)', fontSize: 12 }}>No bids marked as Not Bidding.</div>
+        )}
       </div>
     </div>
   );
