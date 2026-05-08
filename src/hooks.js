@@ -82,13 +82,30 @@ export function useTopClients(bids, n = 10) {
   const active = bids.filter(b => b.bid_amount > 0 && b.client);
   const clientMap = {};
   active.forEach(b => {
-    const key = b.client.trim();
-    if (!key) return;
-    if (!clientMap[key]) clientMap[key] = { name: key, total: 0, count: 0 };
-    clientMap[key].total += b.bid_amount ?? 0;
-    clientMap[key].count += 1;
+    // Use pre-parsed clients array from DB, or fall back to parsing client string
+    const names = (b.clients && b.clients.length > 0)
+      ? b.clients
+      : parseClients(b.client || '');
+    if (names.length === 0) return;
+    names.forEach(name => {
+      const key = name.trim();
+      if (!key) return;
+      if (!clientMap[key]) clientMap[key] = { name: key, total: 0, count: 0 };
+      // Divide bid amount equally across co-clients
+      clientMap[key].total += (b.bid_amount ?? 0) / names.length;
+      clientMap[key].count += 1;
+    });
   });
   return Object.values(clientMap)
     .sort((a, b) => b.total - a.total)
     .slice(0, n);
+}
+
+// Parse a raw client string into individual client names
+export function parseClients(raw) {
+  if (!raw || !raw.trim()) return [];
+  return raw
+    .split(/[,\/;]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && s.toLowerCase() !== 'nan');
 }

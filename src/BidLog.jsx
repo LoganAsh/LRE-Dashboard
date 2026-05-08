@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from './supabase.js';
 import { fmtFull$, fmt$, classifyStatus, YEARS } from './utils.js';
+import { parseClients } from './hooks.js';
 
 const PAGE_SIZE = 25;
 
@@ -262,7 +263,13 @@ export default function BidLog({ bids: initialBids }) {
                   <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.name}>
                     {b.name}{b.user_notes && <span title={b.user_notes} style={{ marginLeft: 5, color: 'var(--accent)', fontSize: 10 }}>✎</span>}
                   </td>
-                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{b.client}</td>
+                  <td style={{ fontSize: 12 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                      {(b.clients && b.clients.length > 0 ? b.clients : parseClients(b.client || '')).map(c => (
+                        <span key={c} style={{ display: 'inline-block', padding: '1px 6px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 10, whiteSpace: 'nowrap' }}>{c}</span>
+                      ))}
+                    </div>
+                  </td>
                   <td className="amount-cell" style={{ fontSize: 12 }}>{b.bid_amount > 0 ? fmtFull$(b.bid_amount) : '—'}</td>
                   <td className="amount-cell" style={{ fontSize: 12, color: awardVal > 0 ? 'var(--won)' : 'var(--muted)' }}>
                     {awardVal > 0 ? fmtFull$(awardVal) : '—'}

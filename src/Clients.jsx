@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { useTopClients } from './hooks.js';
+import { useTopClients, parseClients } from './hooks.js';
 import { fmt$, CHART_COLORS, CHART_DEFAULTS } from './utils.js';
 
 export default function Clients({ bids }) {
@@ -16,15 +16,18 @@ export default function Clients({ bids }) {
   const clientsByAwarded = useMemo(() => {
     const map = {};
     bids.filter(b => b.bid_amount > 0 && b.client).forEach(b => {
-      const key = b.client.trim();
-      if (!key) return;
-      const award = b.award_amount ?? 0;
       const effStatus = b.effective_status || b.status;
-      if (!map[key]) map[key] = { name: key, awarded: 0, count: 0 };
-      if (effStatus === 'Won' && award > 0) {
-        map[key].awarded += award;
+      const award = b.award_amount ?? 0;
+      if (effStatus !== 'Won' || award <= 0) return;
+      const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+      if (names.length === 0) return;
+      names.forEach(name => {
+        const key = name.trim();
+        if (!key) return;
+        if (!map[key]) map[key] = { name: key, awarded: 0, count: 0 };
+        map[key].awarded += award / names.length;
         map[key].count += 1;
-      }
+      });
     });
     return Object.values(map)
       .filter(c => c.awarded > 0)
