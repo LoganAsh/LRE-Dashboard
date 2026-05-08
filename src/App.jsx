@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { LOGO_B64 } from './logo.js';
 import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
+import BidDashboard from './BidDashboard.jsx';
 import Overview from './Overview.jsx';
 import Trends from './Trends.jsx';
 import Clients from './Clients.jsx';
 import BidLog from './BidLog.jsx';
 
-const TABS = ['Overview', 'Trends', 'Clients', 'Bid Log'];
+const TABS = ['Bid Dashboard', 'Overview', 'Trends', 'Clients', 'Bid Log'];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('Overview');
+  const [activeTab, setActiveTab] = useState('Bid Dashboard');
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
@@ -82,6 +83,7 @@ export default function App() {
         </div>
       ) : (
         <>
+          {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}
           {activeTab === 'Overview' && <Overview bids={bids} yearFilter={yearFilter} setYearFilter={setYearFilter} />}
           {activeTab === 'Trends' && <Trends bids={bids} />}
           {activeTab === 'Clients' && <Clients bids={bids} />}

@@ -42,6 +42,7 @@ function StatusModal({ bid, onClose, onSave }) {
   const [awardedBy, setAwardedBy]       = useState(bid.awarded_by || (clientNames.length === 1 ? clientNames[0] : ''));
   const [lastFollowup, setLastFollowup] = useState(bid.last_followup_date || '');
   const [nextFollowup, setNextFollowup] = useState(bid.next_followup_date || '');
+  const [highPriority, setHighPriority] = useState(bid.high_priority || false);
   const [saving, setSaving]             = useState(false);
   const [error, setError]               = useState('');
 
@@ -62,13 +63,15 @@ function StatusModal({ bid, onClose, onSave }) {
       award_amount: awardNum, last_followup_date: lastFollowup || null,
       next_followup_date: nextFollowup || null,
       awarded_by: status === 'Won' ? (awardedBy || null) : null,
+      high_priority: highPriority,
     }).eq('id', bid.id);
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSave({ ...bid, status_override: status, effective_status: status, user_notes: notes,
       award_amount: awardNum, last_followup_date: lastFollowup || null,
       next_followup_date: nextFollowup || null, projected_profit: profit,
-      awarded_by: status === 'Won' ? (awardedBy || null) : null });
+      awarded_by: status === 'Won' ? (awardedBy || null) : null,
+      high_priority: highPriority });
     onClose();
   };
 
@@ -151,6 +154,19 @@ function StatusModal({ bid, onClose, onSave }) {
               )}
             </div>
           )}
+          <div style={{ marginBottom: 14 }}>
+            <button onClick={() => setHighPriority(p => !p)} style={{
+              width: '100%', padding: '8px 0', cursor: 'pointer',
+              background: highPriority ? 'rgba(250,204,21,0.12)' : 'var(--surface)',
+              border: `1px solid ${highPriority ? 'rgba(250,204,21,0.5)' : 'var(--border)'}`,
+              borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 12,
+              color: highPriority ? '#facc15' : 'var(--muted)', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}>
+              <span style={{ fontSize: 14 }}>★</span>
+              {highPriority ? 'High Priority — click to remove' : 'Mark as High Priority'}
+            </button>
+          </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Notes</label>
             <textarea placeholder="Add notes…" value={notes} onChange={e => setNotes(e.target.value)} rows={3} style={{ ...field, resize: 'vertical', lineHeight: 1.6 }} />
