@@ -11,7 +11,7 @@ function yearStats(bids, year) {
 export default function Trends({ bids }) {
   const stats = YEARS.map(y => {
     const active = bids.filter(b => b.year === y && b.bid_amount > 0);
-    const won = active.filter(b => b.status === 'Won');
+    const won = active.filter(b => (b.effective_status || b.status) === 'Won');
     const margins = active.filter(b => b.margin_pct > 0).map(b => b.margin_pct * 100);
     return {
       year: y,
