@@ -7,16 +7,21 @@ export default function Clients({ bids }) {
   const clients = useTopClients(bids, 10);
   const maxVal = clients[0]?.total ?? 1;
 
+  // Sort by count descending for the bottom chart
+  const clientsByCount = useMemo(() =>
+    [...clients].sort((a, b) => b.count - a.count),
+  [clients]);
+
   const countChart = useMemo(() => ({
-    labels: clients.map(c => c.name.length > 18 ? c.name.slice(0, 18) + '…' : c.name),
+    labels: clientsByCount.map(c => c.name.length > 18 ? c.name.slice(0, 18) + '...' : c.name),
     datasets: [{
-      data: clients.map(c => c.count),
+      data: clientsByCount.map(c => c.count),
       backgroundColor: 'rgba(59,111,232,0.55)',
       borderColor: CHART_COLORS.accent,
       borderWidth: 1,
       borderRadius: 3,
     }],
-  }), [clients]);
+  }), [clientsByCount]);
 
   return (
     <div className="page">
@@ -27,7 +32,7 @@ export default function Clients({ bids }) {
             <div className="client-row" key={c.name}>
               <div className="client-name" title={c.name}>{c.name}</div>
               <div className="client-bar-bg">
-                <div className="client-bar-fill" style={{ width: `${(c.total / maxVal * 100).toFixed(1)}%` }} />
+                <div className="client-bar-fill" style={{ width: (c.total / maxVal * 100).toFixed(1) + '%' }} />
               </div>
               <div className="client-amount">{fmt$(c.total)}</div>
             </div>
@@ -35,7 +40,7 @@ export default function Clients({ bids }) {
         </div>
       </div>
       <div className="chart-card">
-        <div className="chart-title">Bid Count by Client <span>top 10</span></div>
+        <div className="chart-title">Top 10 Clients by Total Bid Count</div>
         <div className="chart-wrap tall">
           <Bar data={countChart} options={CHART_DEFAULTS} />
         </div>
