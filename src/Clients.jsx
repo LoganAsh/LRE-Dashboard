@@ -103,15 +103,25 @@ export default function Clients({ bids }) {
         <div className="chart-wrap tall"><Bar data={countChart} options={getChartDefaults()} /></div>
       </div>
 
-      {/* Awarded chart */}
+      {/* Awarded bar list */}
       <div className="chart-card">
         <div className="chart-title">Top 10 Clients by Total Awarded Bid Value <span>won projects only</span></div>
         {clientsByAwarded.length === 0 ? (
           <div style={{ color: 'var(--muted)', fontSize: 12, padding: '20px 0', textAlign: 'center' }}>
-            No awarded bids with award amounts recorded yet. Use the Status modal in Bid Log to enter award amounts.
+            No awarded bids recorded yet. Use the Status modal in Bid Log to enter award amounts.
           </div>
         ) : (
-          <div className="chart-wrap tall"><Bar data={awardedChart} options={awardedOpts} /></div>
+          <div className="client-bar-list">
+            {clientsByAwarded.map(c => (
+              <div className="client-row" key={c.name}>
+                <div className="client-name" title={c.name}>{c.name}</div>
+                <div className="client-bar-bg">
+                  <div className="client-bar-fill" style={{ width: (c.awarded / clientsByAwarded[0].awarded * 100).toFixed(1) + '%', background: 'var(--won)' }} />
+                </div>
+                <div className="client-amount">{fmt$(c.awarded)}</div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
