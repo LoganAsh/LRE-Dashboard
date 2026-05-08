@@ -65,8 +65,8 @@ export default function Clients({ bids }) {
 
   const awardedOpts = useMemo(() => ({
     ...getChartDefaults(),
-    plugins: { ...CHART_DEFAULTS.plugins, tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => ' ' + fmt$(ctx.raw) } } },
-    scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => fmt$(v) } } },
+    plugins: { ...getChartDefaults().plugins, tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => ' ' + fmt$(ctx.raw) } } },
+    scales: { ...getChartDefaults().scales, y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => fmt$(v) } } },
   }), []);
 
   return (

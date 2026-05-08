@@ -72,19 +72,19 @@ export default function Trends({ bids }) {
   const volOpts = useMemo(() => ({
     ...getChartDefaults(),
     plugins: {
-      ...CHART_DEFAULTS.plugins,
-      tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => fmt$(ctx.raw) } },
+      ...getChartDefaults().plugins,
+      tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => fmt$(ctx.raw) } },
     },
     scales: {
-      ...CHART_DEFAULTS.scales,
-      y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => fmt$(v) } },
+      ...getChartDefaults().scales,
+      y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => fmt$(v) } },
     },
   }), []);
 
   const countOpts = useMemo(() => ({
     ...getChartDefaults(),
     plugins: {
-      ...CHART_DEFAULTS.plugins,
+      ...getChartDefaults().plugins,
       legend: {
         display: true,
         labels: { color: '#7a8298', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 12 },
@@ -95,12 +95,12 @@ export default function Trends({ bids }) {
   const marginOpts = useMemo(() => ({
     ...getChartDefaults(),
     plugins: {
-      ...CHART_DEFAULTS.plugins,
-      tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)}%` } },
+      ...getChartDefaults().plugins,
+      tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)}%` } },
     },
     scales: {
-      ...CHART_DEFAULTS.scales,
-      y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v + '%' } },
+      ...getChartDefaults().scales,
+      y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => v + '%' } },
     },
   }), []);
 

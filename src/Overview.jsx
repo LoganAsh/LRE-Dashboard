@@ -81,12 +81,12 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
   const volOpts = useMemo(() => ({
     ...getChartDefaults(),
     plugins: {
-      ...CHART_DEFAULTS.plugins,
-      tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => fmt$(ctx.raw) } },
+      ...getChartDefaults().plugins,
+      tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => fmt$(ctx.raw) } },
     },
     scales: {
-      ...CHART_DEFAULTS.scales,
-      y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => fmt$(v) } },
+      ...getChartDefaults().scales,
+      y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => fmt$(v) } },
     },
   }), []);
 
@@ -100,7 +100,7 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
         position: 'right',
         labels: { color: '#7a8298', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 12, padding: 12 },
       },
-      tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } },
+      tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } },
     },
   }), []);
 
