@@ -206,7 +206,7 @@ export default function BidDashboard({ bids: initialBids }) {
     return bids
       .filter(b => {
         const eff = b.effective_status || b.status;
-        if (!['Pending','Upcoming'].includes(eff)) return false;
+        if (eff !== 'Upcoming') return false;
         if (!b.bid_date) return false;
         const d = new Date(b.bid_date + 'T00:00:00');
         return d >= oneWeekAgo;
