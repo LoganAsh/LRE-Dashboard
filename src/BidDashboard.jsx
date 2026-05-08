@@ -40,7 +40,7 @@ function UrgencyBadge({ days }) {
 }
 
 // ── Bid Card ──────────────────────────────────────────────────────────────────
-function BidCard({ bid, onTogglePriority }) {
+function BidCard({ bid, onTogglePriority, onNotBidding }) {
   const days = getDaysUntil(bid.bid_date);
   const col = urgencyColor(days);
   const clientNames = (bid.clients && bid.clients.length > 0) ? bid.clients : parseClients(bid.client || '');
@@ -57,20 +57,33 @@ function BidCard({ bid, onTogglePriority }) {
       transition: 'border-color 0.15s',
       position: 'relative',
     }}>
-      {/* High priority star */}
-      <button
-        onClick={() => onTogglePriority(bid)}
-        title={isHP ? 'Remove high priority' : 'Mark as high priority'}
-        style={{
-          position: 'absolute', top: 10, right: 12,
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 16, lineHeight: 1, padding: 2,
-          color: isHP ? '#facc15' : 'var(--border)',
-          transition: 'color 0.15s',
-        }}
-        onMouseEnter={e => { if (!isHP) e.currentTarget.style.color = '#facc1588'; }}
-        onMouseLeave={e => { if (!isHP) e.currentTarget.style.color = 'var(--border)'; }}
-      >★</button>
+      {/* Controls: top-right */}
+      <div style={{ position: 'absolute', top: 8, right: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button
+          onClick={() => onNotBidding(bid)}
+          title="Mark as Not Bidding — removes from dashboard"
+          style={{
+            padding: '2px 8px', fontSize: 10, fontFamily: 'var(--font-mono)',
+            background: 'var(--surface2)', border: '1px solid var(--border)',
+            borderRadius: 3, color: 'var(--muted)', cursor: 'pointer',
+            transition: 'all 0.15s', letterSpacing: '0.04em',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#e85c50'; e.currentTarget.style.color = '#e85c50'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
+        >Not Bidding ✕</button>
+        <button
+          onClick={() => onTogglePriority(bid)}
+          title={isHP ? 'Remove high priority' : 'Mark as high priority'}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 16, lineHeight: 1, padding: 2,
+            color: isHP ? '#facc15' : 'var(--border)',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => { if (!isHP) e.currentTarget.style.color = '#facc1588'; }}
+          onMouseLeave={e => { if (!isHP) e.currentTarget.style.color = 'var(--border)'; }}
+        >★</button>
+      </div>
 
       {/* Date block */}
       <div style={{ textAlign: 'center', minWidth: 44, flexShrink: 0 }}>
@@ -221,6 +234,11 @@ export default function BidDashboard({ bids: initialBids }) {
     if (!error) setBids(prev => prev.map(b => b.id === bid.id ? { ...b, high_priority: newVal } : b));
   };
 
+  const handleNotBidding = async (bid) => {
+    const { error } = await supabase.from('lre_bids').update({ status_override: 'No Bid' }).eq('id', bid.id);
+    if (!error) setBids(prev => prev.map(b => b.id === bid.id ? { ...b, status_override: 'No Bid', effective_status: 'No Bid' } : b));
+  };
+
   const hpCount = upcomingBids.filter(b => b.high_priority).length;
 
   return (
@@ -251,7 +269,7 @@ export default function BidDashboard({ bids: initialBids }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {upcomingBids.map(b => (
-                <BidCard key={b.id} bid={b} onTogglePriority={handleTogglePriority} />
+                <BidCard key={b.id} bid={b} onTogglePriority={handleTogglePriority} onNotBidding={handleNotBidding} />
               ))}
             </div>
           )}
