@@ -5,7 +5,7 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { useBidStats, useMonthlyData } from './hooks.js';
-import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS } from './utils.js';
+import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults } from './utils.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler);
 
@@ -79,7 +79,7 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
   }, [stats.active]);
 
   const volOpts = useMemo(() => ({
-    ...CHART_DEFAULTS,
+    ...getChartDefaults(),
     plugins: {
       ...CHART_DEFAULTS.plugins,
       tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => fmt$(ctx.raw) } },
@@ -136,7 +136,7 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
         </div>
         <div className="chart-card">
           <div className="chart-title">Bid Count by Month <span>#</span></div>
-          <div className="chart-wrap tall"><Line data={countChart} options={CHART_DEFAULTS} /></div>
+          <div className="chart-wrap tall"><Line data={countChart} options={getChartDefaults()} /></div>
         </div>
       </div>
 
@@ -148,7 +148,7 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
         </div>
         <div className="chart-card">
           <div className="chart-title">Margin % Distribution <span>active bids</span></div>
-          <div className="chart-wrap"><Bar data={marginBins} options={CHART_DEFAULTS} /></div>
+          <div className="chart-wrap"><Bar data={marginBins} options={getChartDefaults()} /></div>
         </div>
       </div>
     </div>

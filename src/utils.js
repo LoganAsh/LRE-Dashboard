@@ -22,6 +22,48 @@ export const CHART_COLORS = {
   pendingAlpha: 'rgba(122,130,152,0.4)',
 };
 
+// Reads CSS variables so charts respond to light/dark theme
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+export function getChartDefaults() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const gridColor  = isLight ? '#d0d4e0' : '#1f2330';
+  const tickColor  = isLight ? '#8289a0' : '#525870';
+  const tooltipBg  = isLight ? '#ffffff' : '#1c2030';
+  const tooltipBdr = isLight ? '#d0d4e0' : '#252a3a';
+  const tooltipTitle = isLight ? '#1a1d2e' : '#dde1ed';
+  const tooltipBody  = isLight ? '#6b7494' : '#7a8298';
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: tooltipBg,
+        borderColor: tooltipBdr,
+        borderWidth: 1,
+        titleColor: tooltipTitle,
+        bodyColor: tooltipBody,
+        titleFont: { family: 'IBM Plex Mono' },
+        bodyFont: { family: 'IBM Plex Mono' },
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: gridColor, drawBorder: false },
+        ticks: { color: tickColor, font: { family: 'IBM Plex Mono', size: 10 } },
+      },
+      y: {
+        grid: { color: gridColor, drawBorder: false },
+        ticks: { color: tickColor, font: { family: 'IBM Plex Mono', size: 10 } },
+      },
+    },
+  };
+}
+
+// Static fallback for places that don't need reactivity
 export const CHART_DEFAULTS = {
   responsive: true,
   maintainAspectRatio: false,

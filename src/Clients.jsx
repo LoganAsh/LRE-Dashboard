@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useTopClients, parseClients } from './hooks.js';
-import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS } from './utils.js';
+import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults } from './utils.js';
 
 export default function Clients({ bids }) {
   const [yearFilter, setYearFilter] = useState('all');
@@ -64,7 +64,7 @@ export default function Clients({ bids }) {
   }), [clientsByAwarded]);
 
   const awardedOpts = useMemo(() => ({
-    ...CHART_DEFAULTS,
+    ...getChartDefaults(),
     plugins: { ...CHART_DEFAULTS.plugins, tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => ' ' + fmt$(ctx.raw) } } },
     scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => fmt$(v) } } },
   }), []);
@@ -100,7 +100,7 @@ export default function Clients({ bids }) {
       {/* Count chart */}
       <div className="chart-card" style={{ marginBottom: 14 }}>
         <div className="chart-title">Top 10 Clients by Total Bid Count</div>
-        <div className="chart-wrap tall"><Bar data={countChart} options={CHART_DEFAULTS} /></div>
+        <div className="chart-wrap tall"><Bar data={countChart} options={getChartDefaults()} /></div>
       </div>
 
       {/* Awarded chart */}

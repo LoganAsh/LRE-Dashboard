@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useBidStats } from './hooks.js';
-import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS } from './utils.js';
+import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults } from './utils.js';
 
 function yearStats(bids, year) {
   const s = useBidStats(bids, year);
@@ -70,7 +70,7 @@ export default function Trends({ bids }) {
   }), [bids]);
 
   const volOpts = useMemo(() => ({
-    ...CHART_DEFAULTS,
+    ...getChartDefaults(),
     plugins: {
       ...CHART_DEFAULTS.plugins,
       tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => fmt$(ctx.raw) } },
@@ -82,7 +82,7 @@ export default function Trends({ bids }) {
   }), []);
 
   const countOpts = useMemo(() => ({
-    ...CHART_DEFAULTS,
+    ...getChartDefaults(),
     plugins: {
       ...CHART_DEFAULTS.plugins,
       legend: {
@@ -93,7 +93,7 @@ export default function Trends({ bids }) {
   }), []);
 
   const marginOpts = useMemo(() => ({
-    ...CHART_DEFAULTS,
+    ...getChartDefaults(),
     plugins: {
       ...CHART_DEFAULTS.plugins,
       tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)}%` } },
