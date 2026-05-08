@@ -11,7 +11,7 @@ const TABS = ['Overview', 'Trends', 'Clients', 'Bid Log'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('Overview');
-  const [yearFilter, setYearFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const { bids, syncLog, loading, error, refetch } = useBids();

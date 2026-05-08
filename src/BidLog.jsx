@@ -1,20 +1,37 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from './supabase.js';
 import { fmtFull$, fmt$, classifyStatus, YEARS } from './utils.js';
-import { parseClients } from './hooks.js';
+import { parseClients, useTopClients } from './hooks.js';
 
 const PAGE_SIZE = 25;
 
 const COLS = [
-  { key: 'bid_date',         label: 'Date',        right: false },
-  { key: 'name',             label: 'Project',      right: false },
-  { key: 'client',           label: 'Client',       right: false },
-  { key: 'bid_amount',       label: 'Bid Amount',   right: true  },
-  { key: 'award_amount',     label: 'Award',        right: true  },
-  { key: 'margin_pct',       label: 'Margin %',     right: true  },
-  { key: 'projected_profit', label: 'Profit + OH',  right: true  },
-  { key: 'effective_status', label: 'Status',       right: false },
+  { key: 'bid_date',         label: 'Bid Date',    right: false },
+  { key: 'bid_time',         label: 'Bid Time',    right: false },
+  { key: 'pre_bid',          label: 'Pre-Bid',     right: false },
+  { key: 'pre_bid_time',     label: 'Pre-Bid Time',right: false },
+  { key: 'name',             label: 'Project',     right: false },
+  { key: 'client',           label: 'Client',      right: false },
+  { key: 'bid_amount',       label: 'Bid Amount',  right: true  },
+  { key: 'award_amount',     label: 'Award',       right: true  },
+  { key: 'margin_pct',       label: 'Margin %',    right: true  },
+  { key: 'projected_profit', label: 'Profit + OH', right: true  },
+  { key: 'effective_status', label: 'Status',      right: false },
 ];
+
+// Date color logic for upcoming/no-bid rows
+function getDateColor(bid) {
+  if (bid.bid_amount > 0) return 'var(--muted)';
+  if (!bid.bid_date) return 'var(--muted)';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const bidDate = new Date(bid.bid_date + 'T00:00:00');
+  const diffDays = Math.ceil((bidDate - today) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0)  return '#e85c50';  // past — red
+  if (diffDays <= 3) return '#f97316';  // within 3 days — orange
+  if (diffDays <= 7) return '#e8c547';  // within 7 days — yellow
+  return '#4ade80';                      // more than 7 days — green
+}
 
 // ── Status Modal ──────────────────────────────────────────────────────────────
 function StatusModal({ bid, onClose, onSave }) {
@@ -67,14 +84,10 @@ function StatusModal({ bid, onClose, onSave }) {
         width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
       }}>
-        <div style={{
-          padding: '16px 20px', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-          position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1,
-        }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, marginBottom: 3 }}>{bid.name}</div>
-            <div style={{ color: 'var(--muted)', fontSize: 11 }}>{bid.client} · {bid.bid_date} · {bid.year}</div>
+            <div style={{ color: 'var(--muted)', fontSize: 11 }}>{bid.client} · {bid.bid_date}{bid.bid_time ? ' ' + bid.bid_time : ''} · {bid.year}</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
         </div>
@@ -91,6 +104,12 @@ function StatusModal({ bid, onClose, onSave }) {
             <div style={{ fontSize: 9, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Profit + OH {(awardNum && awardNum > 0) ? '(on award)' : '(on bid)'}</div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--text)' }}>{fmt$(profit)}</div>
           </div>
+          {bid.pre_bid && (
+            <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px', marginBottom: 14, fontSize: 12 }}>
+              <span style={{ color: 'var(--muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Pre-Bid: </span>
+              <span style={{ color: 'var(--text)' }}>{bid.pre_bid}{bid.pre_bid_time ? ' · ' + bid.pre_bid_time : ''}</span>
+            </div>
+          )}
           {bid.notes && (
             <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px', marginBottom: 14, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
               <span style={{ color: 'var(--text)', fontWeight: 500 }}>Bid Notes: </span>{bid.notes}
@@ -162,7 +181,24 @@ export default function BidLog({ bids: initialBids }) {
     setBids(prev => prev.map(b => b.id === updated.id ? updated : b));
   }, []);
 
-  // One week ago for filtering upcoming bids
+  // Build top-client set for green pill highlighting
+  const topClientNames = useMemo(() => {
+    const top = useTopClients ? [] : [];
+    const map = {};
+    bids.filter(b => b.bid_amount > 0 && b.client).forEach(b => {
+      const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+      names.forEach(n => {
+        const key = n.trim();
+        if (!key) return;
+        if (!map[key]) map[key] = 0;
+        map[key] += b.bid_amount ?? 0;
+      });
+    });
+    return new Set(
+      Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k]) => k)
+    );
+  }, [bids]);
+
   const oneWeekAgo = useMemo(() => {
     const d = new Date(); d.setDate(d.getDate() - 7);
     return d.toISOString().split('T')[0];
@@ -173,9 +209,7 @@ export default function BidLog({ bids: initialBids }) {
     return bids
       .filter(b => {
         const effStatus = b.effective_status || b.status;
-        // Always include bids with amounts
         if (b.bid_amount > 0) return true;
-        // For zero-amount bids (Upcoming), only show if date >= one week ago
         if (effStatus === 'Upcoming' && b.bid_date && b.bid_date >= oneWeekAgo) return true;
         return false;
       })
@@ -240,49 +274,63 @@ export default function BidLog({ bids: initialBids }) {
           </thead>
           <tbody>
             {pageData.map((b, i) => {
-              const effStatus = b.effective_status || b.status;
-              const isWon     = effStatus === 'Won';
+              const effStatus  = b.effective_status || b.status;
+              const isWon      = effStatus === 'Won';
               const isUpcoming = effStatus === 'Upcoming';
-              const awardVal  = b.award_amount ?? 0;
-              const baseVal   = awardVal > 0 ? awardVal : (b.bid_amount ?? 0);
-              const profit    = baseVal * (b.margin_pct ?? 0);
-              const overdue   = b.next_followup_date && new Date(b.next_followup_date) <= new Date();
-
-              // Row background
-              const rowBg = isWon
-                ? 'rgba(46,189,126,0.07)'
-                : overdue
-                ? 'rgba(232,197,71,0.04)'
-                : 'transparent';
+              const awardVal   = b.award_amount ?? 0;
+              const baseVal    = awardVal > 0 ? awardVal : (b.bid_amount ?? 0);
+              const profit     = baseVal * (b.margin_pct ?? 0);
+              const overdue    = b.next_followup_date && new Date(b.next_followup_date) <= new Date();
+              const dateColor  = getDateColor(b);
+              const rowBg      = isWon ? 'rgba(46,189,126,0.07)' : overdue ? 'rgba(232,197,71,0.04)' : 'transparent';
+              const clientNames = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
 
               return (
                 <tr key={b.id ?? i} style={{ background: rowBg }}>
-                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 12 }}>
+                  {/* Bid Date */}
+                  <td style={{ color: dateColor, whiteSpace: 'nowrap', fontSize: 12, fontWeight: dateColor !== 'var(--muted)' ? 500 : 400 }}>
                     {b.bid_date ?? '—'}{overdue && <span title={`Follow-up due: ${b.next_followup_date}`} style={{ marginLeft: 5, color: '#e8c547', fontSize: 9 }}>●</span>}
                   </td>
-                  <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.name}>
+                  {/* Bid Time */}
+                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 11 }}>{b.bid_time || '—'}</td>
+                  {/* Pre-Bid */}
+                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 11 }}>{b.pre_bid || '—'}</td>
+                  {/* Pre-Bid Time */}
+                  <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 11 }}>{b.pre_bid_time || '—'}</td>
+                  {/* Project */}
+                  <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.name}>
                     {b.name}{b.user_notes && <span title={b.user_notes} style={{ marginLeft: 5, color: 'var(--accent)', fontSize: 10 }}>✎</span>}
                   </td>
+                  {/* Client tags */}
                   <td style={{ fontSize: 12 }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                      {(b.clients && b.clients.length > 0 ? b.clients : parseClients(b.client || '')).map(c => (
-                        <span key={c} style={{ display: 'inline-block', padding: '1px 6px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 10, whiteSpace: 'nowrap' }}>{c}</span>
-                      ))}
+                      {clientNames.map(c => {
+                        const isTop = topClientNames.has(c.trim());
+                        return (
+                          <span key={c} style={{
+                            display: 'inline-block', padding: '1px 6px',
+                            background: isTop ? 'rgba(46,189,126,0.15)' : 'var(--surface2)',
+                            border: `1px solid ${isTop ? 'rgba(46,189,126,0.4)' : 'var(--border)'}`,
+                            borderRadius: 3, color: isTop ? 'var(--won)' : 'var(--muted)',
+                            fontSize: 10, whiteSpace: 'nowrap',
+                          }}>{c}</span>
+                        );
+                      })}
                     </div>
                   </td>
+                  {/* Bid Amount */}
                   <td className="amount-cell" style={{ fontSize: 12 }}>{b.bid_amount > 0 ? fmtFull$(b.bid_amount) : '—'}</td>
-                  <td className="amount-cell" style={{ fontSize: 12, color: awardVal > 0 ? 'var(--won)' : 'var(--muted)' }}>
-                    {awardVal > 0 ? fmtFull$(awardVal) : '—'}
-                  </td>
-                  <td className="amount-cell" style={{ fontSize: 12 }}>
-                    {b.margin_pct > 0 ? `${((b.margin_pct ?? 0) * 100).toFixed(1)}%` : '—'}
-                  </td>
+                  {/* Award */}
+                  <td className="amount-cell" style={{ fontSize: 12, color: awardVal > 0 ? 'var(--won)' : 'var(--muted)' }}>{awardVal > 0 ? fmtFull$(awardVal) : '—'}</td>
+                  {/* Margin % */}
+                  <td className="amount-cell" style={{ fontSize: 12 }}>{b.margin_pct > 0 ? `${((b.margin_pct ?? 0) * 100).toFixed(1)}%` : '—'}</td>
+                  {/* Profit + OH */}
                   <td className="amount-cell" style={{ fontSize: 12, fontWeight: isWon ? 600 : 400, color: isWon ? 'var(--won)' : 'var(--muted)' }}>
                     {b.margin_pct > 0 ? fmt$(profit) : '—'}
                   </td>
-                  <td>
-                    <span className={`status-pill ${isUpcoming ? 'pill-upcoming' : classifyStatus(effStatus)}`}>{effStatus}</span>
-                  </td>
+                  {/* Status */}
+                  <td><span className={`status-pill ${isUpcoming ? 'pill-upcoming' : classifyStatus(effStatus)}`}>{effStatus}</span></td>
+                  {/* Action */}
                   <td style={{ textAlign: 'center' }}>
                     <button onClick={() => setModalBid(b)}
                       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
