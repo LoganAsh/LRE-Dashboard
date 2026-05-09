@@ -86,7 +86,7 @@ function StatusModal({ bid, onClose, onSave }) {
       position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
-      <div style={{
+      <div className="modal-inner" style={{
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10,
         width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 64px rgba(0,0,0,0.7)',

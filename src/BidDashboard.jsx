@@ -217,7 +217,7 @@ export default function BidDashboard({ bids: initialBids }) {
       </div>
 
       {/* Main two-column layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: 16, alignItems: 'start' }} className="dashboard-grid">
         {/* Upcoming Bids */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>

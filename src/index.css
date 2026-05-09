@@ -246,10 +246,68 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .chart-grid { grid-template-columns: 1fr; }
+  /* Layout */
+  .page { padding: 12px 14px; }
+  .header { padding: 8px 14px; gap: 8px; }
+  .header-logo { height: 34px; }
+  .header-right { gap: 8px; }
+  .header-meta { display: none; }
+  .sync-btn { padding: 5px 10px; font-size: 10px; }
+  .sync-status { font-size: 9px; }
+
+  /* Nav */
+  .nav { padding: 0 8px; overflow-x: auto; gap: 0; }
+  .nav-tab { padding: 9px 12px; font-size: 11px; white-space: nowrap; }
+
+  /* KPI grid - 2 cols on mobile */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .kpi { padding: 14px 14px; }
+  .kpi-value { font-size: 20px; }
+
+  /* Charts - always single column */
+  .chart-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+  .chart-wrap { height: 200px; }
+  .chart-wrap.tall { height: 220px; }
+
+  /* Client bars */
+  .client-bar-list { gap: 8px; }
+  .client-row { grid-template-columns: 100px 1fr 60px; gap: 6px; }
+  .client-name { font-size: 10px; }
+  .client-amount { font-size: 10px; }
+
+  /* Table */
+  .table-controls { gap: 8px; }
+  .search-input { width: 100%; }
+  .table-count { display: none; }
+
+  /* Filter bar */
+  .filter-bar { gap: 6px; }
+  .year-btn { padding: 4px 10px; font-size: 11px; }
+
+  /* Pagination */
+  .pagination { gap: 4px; }
+  .page-btn { padding: 4px 8px; font-size: 10px; }
+}
+
+@media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .page { padding: 16px; }
-  .header { padding: 10px 16px; }
-  .nav { padding: 0 16px; }
-  .client-row { grid-template-columns: 120px 1fr 70px; }
+  .kpi-value { font-size: 18px; }
+  .kpi-label { font-size: 9px; }
+  .nav-tab { padding: 8px 10px; font-size: 10px; }
+  .client-row { grid-template-columns: 80px 1fr 55px; }
+}
+
+/* Bid Dashboard grid - two col on desktop, single on mobile */
+@media (min-width: 769px) {
+  .dashboard-grid { grid-template-columns: 1fr 340px !important; gap: 24px !important; }
+}
+
+/* Modal full-screen on mobile */
+@media (max-width: 600px) {
+  .modal-inner {
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    height: 100vh;
+  }
 }
