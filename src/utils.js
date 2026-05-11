@@ -93,10 +93,13 @@ export const CHART_DEFAULTS = {
 
 export const classifyStatus = (status) => {
   switch (status) {
-    case 'Won': return 'pill-won';
-    case 'Lost': return 'pill-lost';
-    case 'No Bid': return 'pill-nobid';
-    default: return 'pill-pending';
+    case 'Won':                return 'pill-won';
+    case 'Lost':               return 'pill-lost';
+    case 'No Bid':             return 'pill-nobid';
+    case 'Upcoming':           return 'pill-upcoming';
+    case 'Client Not Awarded': return 'pill-cna';
+    case 'Project Re-Bid':     return 'pill-rebid';
+    default:                   return 'pill-pending';
   }
 };
 

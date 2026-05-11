@@ -48,10 +48,16 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
   }), [monthly]);
 
   const donutChart = useMemo(() => ({
-    labels: ['Won', 'Lost', 'Pending'],
+    labels: ['Won', 'Lost', 'Pending', 'Client Not Awarded', 'Project Re-Bid'],
     datasets: [{
-      data: [stats.won.length, stats.lost.length, stats.pending.length],
-      backgroundColor: [CHART_COLORS.wonAlpha, 'rgba(232,92,80,0.75)', CHART_COLORS.pendingAlpha],
+      data: [
+        stats.won.length,
+        stats.lost.length,
+        stats.pending.length,
+        stats.active.filter(b => (b.effective_status||b.status) === 'Client Not Awarded').length,
+        stats.active.filter(b => (b.effective_status||b.status) === 'Project Re-Bid').length,
+      ],
+      backgroundColor: [CHART_COLORS.wonAlpha, 'rgba(232,92,80,0.75)', CHART_COLORS.pendingAlpha, 'rgba(249,115,22,0.7)', 'rgba(232,197,71,0.7)'],
       borderWidth: 0,
       hoverOffset: 6,
     }],

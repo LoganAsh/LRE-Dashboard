@@ -46,7 +46,7 @@ export function useBidStats(bids, yearFilter) {
   const active = filtered.filter(b => b.bid_amount > 0);
   const won = active.filter(b => (b.effective_status || b.status) === 'Won');
   const lost = active.filter(b => (b.effective_status || b.status) === 'Lost');
-  const pending = active.filter(b => (b.effective_status || b.status) === 'Pending');
+  const pending = active.filter(b => ['Pending','Upcoming'].includes(b.effective_status || b.status));
 
   const totalVolume = active.reduce((s, b) => s + (b.bid_amount ?? 0), 0);
   const wonVolume = won.reduce((s, b) => s + (b.bid_amount ?? 0), 0);

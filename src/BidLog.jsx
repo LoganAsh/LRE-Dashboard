@@ -129,11 +129,11 @@ function StatusModal({ bid, onClose, onSave }) {
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Status</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              {['Won', 'Pending', 'Lost', 'Upcoming'].map(s => {
+              {['Won', 'Pending', 'Lost', 'Upcoming', 'Client Not Awarded', 'Project Re-Bid'].map(s => {
                 const active = status === s;
-                const col = s === 'Won' ? 'var(--won)' : s === 'Lost' ? 'var(--lost)' : s === 'Upcoming' ? '#a78bfa' : 'var(--accent)';
-                const bg  = s === 'Won' ? 'rgba(46,189,126,0.15)' : s === 'Lost' ? 'rgba(232,92,80,0.15)' : s === 'Upcoming' ? 'rgba(167,139,250,0.15)' : 'var(--accent-light)';
-                return <button key={s} onClick={() => setStatus(s)} style={{ flex: 1, padding: '8px 0', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s' }}>{s}</button>;
+                const col = s === 'Won' ? 'var(--won)' : s === 'Lost' ? 'var(--lost)' : s === 'Upcoming' ? '#a78bfa' : s === 'Client Not Awarded' ? '#f97316' : s === 'Project Re-Bid' ? '#e8c547' : 'var(--accent)';
+                const bg  = s === 'Won' ? 'rgba(46,189,126,0.15)' : s === 'Lost' ? 'rgba(232,92,80,0.15)' : s === 'Upcoming' ? 'rgba(167,139,250,0.15)' : s === 'Client Not Awarded' ? 'rgba(249,115,22,0.15)' : s === 'Project Re-Bid' ? 'rgba(232,197,71,0.15)' : 'var(--accent-light)';
+                return <button key={s} onClick={() => setStatus(s)} style={{ flex: 1, minWidth: 'calc(33% - 6px)', padding: '8px 6px', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s', textAlign: 'center', lineHeight: 1.3 }}>{s}</button>;
               })}
             </div>
           </div>
@@ -290,6 +290,8 @@ export default function BidLog({ bids: initialBids }) {
           <option value="Pending">Pending</option>
           <option value="Upcoming">Upcoming</option>
           <option value="No Bid">No Bid</option>
+          <option value="Client Not Awarded">Client Not Awarded</option>
+          <option value="Project Re-Bid">Project Re-Bid</option>
         </select>
         <select className="select-filter" value={yearFilter} onChange={e => { setYearFilter(e.target.value); setPage(1); }}>
           <option value="">All Years</option>

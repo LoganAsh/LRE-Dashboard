@@ -213,6 +213,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .pill-pending { background: rgba(122,130,152,0.15); color: var(--pending); }
 .pill-nobid { background: rgba(58,63,82,0.3); color: var(--muted); }
 .pill-upcoming { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.pill-cna    { background: rgba(249,115,22,0.15);  color: #f97316; }
+.pill-rebid  { background: rgba(232,197,71,0.15);  color: #e8c547; }
 
 .amount-cell { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
 .margin-bar { display: flex; align-items: center; gap: 6px; }
