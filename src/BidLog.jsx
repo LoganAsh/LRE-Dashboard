@@ -128,12 +128,17 @@ function StatusModal({ bid, onClose, onSave }) {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Status</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {['Won', 'Pending', 'Lost', 'Upcoming', 'Client Not Awarded', 'Project Re-Bid'].map(s => {
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+              {[
+                ['Won',                'var(--won)',   'rgba(46,189,126,0.15)'],
+                ['Pending',            'var(--accent)','var(--accent-light)'],
+                ['Lost',               'var(--lost)',  'rgba(232,92,80,0.15)'],
+                ['Upcoming',           '#a78bfa',      'rgba(167,139,250,0.15)'],
+                ['Client Not Awarded', '#f97316',      'rgba(249,115,22,0.15)'],
+                ['Project Re-Bid',     '#e8c547',      'rgba(232,197,71,0.15)'],
+              ].map(([s, col, bg]) => {
                 const active = status === s;
-                const col = s === 'Won' ? 'var(--won)' : s === 'Lost' ? 'var(--lost)' : s === 'Upcoming' ? '#a78bfa' : s === 'Client Not Awarded' ? '#f97316' : s === 'Project Re-Bid' ? '#e8c547' : 'var(--accent)';
-                const bg  = s === 'Won' ? 'rgba(46,189,126,0.15)' : s === 'Lost' ? 'rgba(232,92,80,0.15)' : s === 'Upcoming' ? 'rgba(167,139,250,0.15)' : s === 'Client Not Awarded' ? 'rgba(249,115,22,0.15)' : s === 'Project Re-Bid' ? 'rgba(232,197,71,0.15)' : 'var(--accent-light)';
-                return <button key={s} onClick={() => setStatus(s)} style={{ flex: 1, minWidth: 'calc(33% - 6px)', padding: '8px 6px', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s', textAlign: 'center', lineHeight: 1.3 }}>{s}</button>;
+                return <button key={s} onClick={() => setStatus(s)} style={{ padding: '9px 4px', border: `1px solid ${active ? col : 'var(--border)'}`, borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500, background: active ? bg : 'var(--surface)', color: active ? col : 'var(--muted)', transition: 'all 0.15s', textAlign: 'center', lineHeight: 1.3 }}>{s}</button>;
               })}
             </div>
           </div>
