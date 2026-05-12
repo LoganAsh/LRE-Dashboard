@@ -110,7 +110,7 @@ export function isPublicBid(bid) {
   const names = (bid.clients && bid.clients.length > 0)
     ? bid.clients
     : (bid.client || '').split(/[,\/;]+/).map(s => s.replace(/^Sub-/i, '').trim());
-  return names.some(n => /city/i.test(n));
+  return names.some(n => /city/i.test(n) || /^udot$/i.test(n.trim()));
 }
 
 export function filterByType(bids, type) {

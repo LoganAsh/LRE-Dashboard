@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from './supabase.js';
-import { fmtFull$, fmt$, classifyStatus, YEARS, filterByType } from './utils.js';
+import { fmtFull$, fmt$, classifyStatus, YEARS, filterByType, isPublicBid } from './utils.js';
 import { parseClients, useTopClients } from './hooks.js';
 
 const PAGE_SIZE = 25;
@@ -258,7 +258,7 @@ export default function BidLog({ bids: initialBids }) {
       })
       .filter(b => !q || b.name?.toLowerCase().includes(q) || b.client?.toLowerCase().includes(q))
       .filter(b => !statusFilter || (b.effective_status || b.status) === statusFilter)
-      .filter(b => { const t = typeFilter; if (t === 'All') return true; return t === 'Public' ? /city/i.test(b.client||'') : !/city/i.test(b.client||''); })
+      .filter(b => { if (typeFilter === 'All') return true; const pub = isPublicBid(b); return typeFilter === 'Public' ? pub : !pub; })
       .filter(b => !yearFilter || b.year === yearFilter)
       .sort((a, b) => {
         let av = a[sortKey] ?? 0, bv = b[sortKey] ?? 0;
