@@ -22,7 +22,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       wonVolume: won.reduce((s, b) => s + (b.bid_amount ?? 0), 0),
       avgMargin: margins.length ? margins.reduce((a, v) => a + v, 0) / margins.length : 0,
     };
-  }), [stats]);
+  }), [typedBids]);
 
   const barColors = [CHART_COLORS.accent, CHART_COLORS.blue2, CHART_COLORS.won, '#e85c50'];
   const barAlphas = ['rgba(59,111,232,0.7)', 'rgba(107,159,240,0.7)', 'rgba(46,189,126,0.7)', 'rgba(232,92,80,0.7)'];
