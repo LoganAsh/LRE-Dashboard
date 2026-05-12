@@ -5,7 +5,7 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { useBidStats, useMonthlyData } from './hooks.js';
-import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults } from './utils.js';
+import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, filterByType } from './utils.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler);
 

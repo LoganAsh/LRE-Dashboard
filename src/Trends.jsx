@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useBidStats } from './hooks.js';
-import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults } from './utils.js';
+import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, filterByType } from './utils.js';
 
 function yearStats(bids, year) {
   const s = useBidStats(bids, year);
