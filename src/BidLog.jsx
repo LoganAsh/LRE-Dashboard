@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from './supabase.js';
-import { fmtFull$, fmt$, classifyStatus, YEARS } from './utils.js';
+import { fmtFull$, fmt$, classifyStatus, YEARS, filterByType } from './utils.js';
 import { parseClients, useTopClients } from './hooks.js';
 
 const PAGE_SIZE = 25;
@@ -209,6 +209,7 @@ function StatusModal({ bid, onClose, onSave }) {
 // ── Main BidLog ───────────────────────────────────────────────────────────────
 export default function BidLog({ bids: initialBids }) {
   const [bids, setBids]                 = useState(initialBids);
+  const [typeFilter, setTypeFilter]     = useState('All');
   const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [yearFilter, setYearFilter]     = useState('');
@@ -257,13 +258,14 @@ export default function BidLog({ bids: initialBids }) {
       })
       .filter(b => !q || b.name?.toLowerCase().includes(q) || b.client?.toLowerCase().includes(q))
       .filter(b => !statusFilter || (b.effective_status || b.status) === statusFilter)
+      .filter(b => { const t = typeFilter; if (t === 'All') return true; return t === 'Public' ? /city/i.test(b.client||'') : !/city/i.test(b.client||''); })
       .filter(b => !yearFilter || b.year === yearFilter)
       .sort((a, b) => {
         let av = a[sortKey] ?? 0, bv = b[sortKey] ?? 0;
         if (typeof av === 'string') return sortDir * av.localeCompare(bv);
         return sortDir * (av - bv);
       });
-  }, [bids, search, statusFilter, yearFilter, sortKey, sortDir, oneWeekAgo]);
+  }, [bids, search, statusFilter, yearFilter, typeFilter, sortKey, sortDir, oneWeekAgo]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -301,6 +303,11 @@ export default function BidLog({ bids: initialBids }) {
         <select className="select-filter" value={yearFilter} onChange={e => { setYearFilter(e.target.value); setPage(1); }}>
           <option value="">All Years</option>
           {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select className="select-filter" value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); }}>
+          <option value="All">All Types</option>
+          <option value="Public">Public</option>
+          <option value="Private">Private</option>
         </select>
         <span className="table-count">{filtered.length} bids</span>
       </div>

@@ -8,9 +8,10 @@ function yearStats(bids, year) {
   return s;
 }
 
-export default function Trends({ bids }) {
+export default function Trends({ bids, typeFilter, setTypeFilter }) {
+  const typedBids = filterByType(bids, typeFilter);
   const stats = YEARS.map(y => {
-    const active = bids.filter(b => b.year === y && b.bid_amount > 0);
+    const active = typedBids.filter(b => b.year === y && b.bid_amount > 0);
     const won = active.filter(b => (b.effective_status || b.status) === 'Won');
     const margins = active.filter(b => b.margin_pct > 0).map(b => b.margin_pct * 100);
     return {
@@ -106,6 +107,12 @@ export default function Trends({ bids }) {
 
   return (
     <div className="page">
+      <div className="filter-bar" style={{ marginBottom: 20 }}>
+        <span className="filter-label">Type</span>
+        {['All', 'Public', 'Private'].map(t => (
+          <button key={t} className={`year-btn ${typeFilter === t ? 'active' : ''}`} onClick={() => setTypeFilter(t)}>{t}</button>
+        ))}
+      </div>
       <div className="chart-grid full" style={{ marginBottom: 14 }}>
         <div className="chart-card">
           <div className="chart-title">Annual Bid Volume <span>total $</span></div>

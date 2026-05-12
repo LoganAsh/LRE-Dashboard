@@ -20,6 +20,7 @@ export default function App() {
     localStorage.setItem('lre-theme', theme);
   }, [theme]);
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
+  const [typeFilter, setTypeFilter] = useState('All');
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const { bids, syncLog, loading, error, refetch } = useBids();
@@ -95,8 +96,8 @@ export default function App() {
       ) : (
         <>
           {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}
-          {activeTab === 'Overview' && <Overview bids={bids} yearFilter={yearFilter} setYearFilter={setYearFilter} />}
-          {activeTab === 'Trends' && <Trends bids={bids} />}
+          {activeTab === 'Overview' && <Overview bids={bids} yearFilter={yearFilter} setYearFilter={setYearFilter} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />}
+          {activeTab === 'Trends' && <Trends bids={bids} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />}
           {activeTab === 'Clients' && <Clients bids={bids} />}
           {activeTab === 'Bid Log' && <BidLog bids={bids} />}
         </>

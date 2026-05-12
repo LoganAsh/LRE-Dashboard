@@ -104,3 +104,17 @@ export const classifyStatus = (status) => {
 };
 
 export const YEARS = ['2023', '2024', '2025', '2026'];
+
+// A bid is Public if any parsed client name contains 'City'
+export function isPublicBid(bid) {
+  const names = (bid.clients && bid.clients.length > 0)
+    ? bid.clients
+    : (bid.client || '').split(/[,\/;]+/).map(s => s.replace(/^Sub-/i, '').trim());
+  return names.some(n => /city/i.test(n));
+}
+
+export function filterByType(bids, type) {
+  if (type === 'Public')  return bids.filter(b => isPublicBid(b));
+  if (type === 'Private') return bids.filter(b => !isPublicBid(b));
+  return bids;
+}

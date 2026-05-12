@@ -19,9 +19,10 @@ function KPI({ label, value, sub, accent }) {
   );
 }
 
-export default function Overview({ bids, yearFilter, setYearFilter }) {
-  const stats = useBidStats(bids, yearFilter);
-  const monthly = useMonthlyData(bids, yearFilter);
+export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, setTypeFilter }) {
+  const typedBids = filterByType(bids, typeFilter);
+  const stats = useBidStats(typedBids, yearFilter);
+  const monthly = useMonthlyData(typedBids, yearFilter);
 
   const volumeChart = useMemo(() => ({
     labels: monthly.map(m => m.month.slice(5)),
@@ -112,17 +113,17 @@ export default function Overview({ bids, yearFilter, setYearFilter }) {
 
   return (
     <div className="page">
-      {/* Year filter */}
+      {/* Year + Type filter */}
       <div className="filter-bar">
         <span className="filter-label">Year</span>
         {['all', ...YEARS].map(y => (
-          <button
-            key={y}
-            className={`year-btn ${yearFilter === y ? 'active' : ''}`}
-            onClick={() => setYearFilter(y)}
-          >
+          <button key={y} className={`year-btn ${yearFilter === y ? 'active' : ''}`} onClick={() => setYearFilter(y)}>
             {y === 'all' ? 'All' : y}
           </button>
+        ))}
+        <span className="filter-label" style={{ marginLeft: 12 }}>Type</span>
+        {['All', 'Public', 'Private'].map(t => (
+          <button key={t} className={`year-btn ${typeFilter === t ? 'active' : ''}`} onClick={() => setTypeFilter(t)}>{t}</button>
         ))}
       </div>
 
