@@ -9,8 +9,8 @@ function yearStats(bids, year) {
 }
 
 export default function Trends({ bids, typeFilter, setTypeFilter }) {
-  const typedBids = filterByType(bids, typeFilter);
-  const stats = YEARS.map(y => {
+  const typedBids = useMemo(() => filterByType(bids, typeFilter), [bids, typeFilter]);
+  const stats = useMemo(() => YEARS.map(y => {
     const active = typedBids.filter(b => b.year === y && b.bid_amount > 0);
     const won = active.filter(b => (b.effective_status || b.status) === 'Won');
     const margins = active.filter(b => b.margin_pct > 0).map(b => b.margin_pct * 100);
@@ -22,7 +22,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       wonVolume: won.reduce((s, b) => s + (b.bid_amount ?? 0), 0),
       avgMargin: margins.length ? margins.reduce((a, v) => a + v, 0) / margins.length : 0,
     };
-  });
+  }), [stats]);
 
   const barColors = [CHART_COLORS.accent, CHART_COLORS.blue2, CHART_COLORS.won, '#e85c50'];
   const barAlphas = ['rgba(59,111,232,0.7)', 'rgba(107,159,240,0.7)', 'rgba(46,189,126,0.7)', 'rgba(232,92,80,0.7)'];
@@ -36,7 +36,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       borderColor: barColors,
       borderWidth: 1, borderRadius: 4,
     }],
-  }), [bids]);
+  }), [stats]);
 
   const countChart = useMemo(() => ({
     labels: YEARS,
@@ -56,7 +56,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
         borderWidth: 1, borderRadius: 3,
       },
     ],
-  }), [bids]);
+  }), [stats]);
 
   const marginChart = useMemo(() => ({
     labels: YEARS,
@@ -68,7 +68,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       pointBackgroundColor: CHART_COLORS.blue2,
       pointRadius: 6, fill: true, tension: 0.3,
     }],
-  }), [bids]);
+  }), [typedBids]);
 
   const volOpts = useMemo(() => ({
     ...getChartDefaults(),
