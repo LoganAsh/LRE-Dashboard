@@ -83,7 +83,7 @@ export function StatusModal({ bid, onClose, onSave }) {
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={{
-      position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)',
+      position: 'fixed', inset: 0, zIndex: 250, background: 'rgba(0,0,0,0.75)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div className="modal-inner" style={{
