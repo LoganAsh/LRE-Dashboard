@@ -45,12 +45,19 @@ function ClientDetail({ clientName, bids, onClose }) {
     const lost = clientBids.filter(b => (b.effective_status || b.status) === 'Lost');
     const pending = clientBids.filter(b => ['Pending', 'Upcoming'].includes(b.effective_status || b.status));
     const totalVolume = clientBids.reduce((s, b) => s + (b.bid_amount || 0), 0);
-    const awardedVolume = won.reduce((s, b) => s + (b.award_amount || b.bid_amount || 0), 0);
+    // Only credit awarded volume to THIS client if awarded_by matches (or is unset and this is the only bidder)
+    const awardedVolume = won.reduce((s, b) => {
+      if (b.awarded_by) {
+        return b.awarded_by.trim().toLowerCase() === clientName.toLowerCase() ? s + (b.award_amount || b.bid_amount || 0) : s;
+      }
+      const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+      return names.length === 1 ? s + (b.award_amount || b.bid_amount || 0) : s;
+    }, 0);
     const winRate = clientBids.length ? (won.length / clientBids.length * 100) : 0;
     const margins = clientBids.filter(b => b.margin_pct > 0).map(b => b.margin_pct * 100);
     const avgMargin = margins.length ? margins.reduce((a, v) => a + v, 0) / margins.length : 0;
     return { won, lost, pending, totalVolume, awardedVolume, winRate, avgMargin };
-  }, [clientBids]);
+  }, [clientBids, clientName]);
 
   const projectStats = useMemo(() => {
     const totalContract = projects.reduce((s, p) => s + (p.original_contract || 0) + (p.approved_cos || 0), 0);
@@ -170,13 +177,17 @@ function ClientDetail({ clientName, bids, onClose }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 320, overflowY: 'auto' }}>
               {sortedBids.map((b, i) => {
                 const eff = b.effective_status || b.status;
-                const pill = STATUS_PILL[eff] || STATUS_PILL['Pending'];
+                // If bid was Won but awarded to a *different* client than this one, show "Not Awarded" for this client's context
+                const namesOnBid = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+                const wonByOther = eff === 'Won' && b.awarded_by && b.awarded_by.trim().toLowerCase() !== clientName.toLowerCase() && namesOnBid.length > 1;
+                const displayStatus = wonByOther ? 'Not Awarded' : eff;
+                const pill = wonByOther ? { bg: 'rgba(58,63,82,0.3)', color: 'var(--muted)' } : (STATUS_PILL[eff] || STATUS_PILL['Pending']);
                 return (
                   <div key={b.id ?? i} style={{ background: 'var(--surface2)', borderRadius: 6, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>{b.bid_date}</span>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</span>
                     <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtFull$(b.bid_amount)}</span>
-                    <span style={{ padding: '2px 7px', borderRadius: 3, fontSize: 10, fontWeight: 600, background: pill.bg, color: pill.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{eff}</span>
+                    <span style={{ padding: '2px 7px', borderRadius: 3, fontSize: 10, fontWeight: 600, background: pill.bg, color: pill.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{displayStatus}</span>
                   </div>
                 );
               })}
@@ -201,7 +212,13 @@ export default function ClientDirectory({ bids }) {
       const clientBids = bidsForClient(bids, name).filter(b => b.bid_amount > 0);
       const won = clientBids.filter(b => (b.effective_status || b.status) === 'Won');
       const totalVolume = clientBids.reduce((s, b) => s + (b.bid_amount || 0), 0);
-      const awardedVolume = won.reduce((s, b) => s + (b.award_amount || b.bid_amount || 0), 0);
+      const awardedVolume = won.reduce((s, b) => {
+        if (b.awarded_by) {
+          return b.awarded_by.trim().toLowerCase() === name.toLowerCase() ? s + (b.award_amount || b.bid_amount || 0) : s;
+        }
+        const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
+        return names.length === 1 ? s + (b.award_amount || b.bid_amount || 0) : s;
+      }, 0);
       const winRate = clientBids.length ? (won.length / clientBids.length * 100) : 0;
       const lastBidDate = clientBids.reduce((max, b) => (b.bid_date || '') > max ? b.bid_date : max, '');
       return { name, bidCount: clientBids.length, wonCount: won.length, totalVolume, awardedVolume, winRate, lastBidDate };
