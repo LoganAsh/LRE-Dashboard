@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { supabase } from './supabase.js';
 import { parseClients } from './hooks.js';
 import { fmt$, fmtFull$ } from './utils.js';
+import { StatusModal } from './BidLog.jsx';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getAllClientNames(bids) {
@@ -24,6 +25,14 @@ function bidsForClient(bids, clientName) {
 function ClientDetail({ clientName, bids, onClose }) {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [localBids, setLocalBids] = useState(bids);
+  const [modalBid, setModalBid] = useState(null);
+
+  useEffect(() => { setLocalBids(bids); }, [bids]);
+
+  const handleBidSave = (updated) => {
+    setLocalBids(prev => prev.map(b => b.id === updated.id ? updated : b));
+  };
 
   useEffect(() => {
     setLoadingProjects(true);
@@ -38,7 +47,7 @@ function ClientDetail({ clientName, bids, onClose }) {
     });
   }, [clientName]);
 
-  const clientBids = useMemo(() => bidsForClient(bids, clientName).filter(b => b.bid_amount > 0), [bids, clientName]);
+  const clientBids = useMemo(() => bidsForClient(localBids, clientName).filter(b => b.bid_amount > 0), [localBids, clientName]);
 
   const stats = useMemo(() => {
     const won = clientBids.filter(b => (b.effective_status || b.status) === 'Won');
@@ -85,6 +94,8 @@ function ClientDetail({ clientName, bids, onClose }) {
   };
 
   return (
+    <>
+    {modalBid && <StatusModal bid={modalBid} onClose={() => setModalBid(null)} onSave={handleBidSave} />}
     <div onClick={e => e.target === e.currentTarget && onClose()} style={{
       position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
@@ -182,13 +193,23 @@ function ClientDetail({ clientName, bids, onClose }) {
                 const wonByOther = eff === 'Won' && b.awarded_by && b.awarded_by.trim().toLowerCase() !== clientName.toLowerCase() && namesOnBid.length > 1;
                 const displayStatus = wonByOther ? 'Not Awarded' : eff;
                 const pill = wonByOther ? { bg: 'rgba(58,63,82,0.3)', color: 'var(--muted)' } : (STATUS_PILL[eff] || STATUS_PILL['Pending']);
+                const showAwarded = eff === 'Won' && !wonByOther && b.award_amount > 0;
+                const displayAmount = showAwarded ? b.award_amount : b.bid_amount;
                 return (
-                  <div key={b.id ?? i} style={{ background: 'var(--surface2)', borderRadius: 6, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <button key={b.id ?? i} onClick={() => setModalBid(b)} style={{
+                    background: 'var(--surface2)', borderRadius: 6, padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                    border: '1px solid transparent', cursor: 'pointer', textAlign: 'left',
+                    fontFamily: 'inherit', color: 'inherit', transition: 'border-color 0.15s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                  >
                     <span style={{ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>{b.bid_date}</span>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</span>
-                    <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtFull$(b.bid_amount)}</span>
+                    <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: showAwarded ? 'var(--won)' : 'var(--muted)', fontWeight: showAwarded ? 600 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtFull$(displayAmount)}</span>
                     <span style={{ padding: '2px 7px', borderRadius: 3, fontSize: 10, fontWeight: 600, background: pill.bg, color: pill.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{displayStatus}</span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -196,6 +217,7 @@ function ClientDetail({ clientName, bids, onClose }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

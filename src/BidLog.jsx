@@ -34,7 +34,7 @@ function getDateColor(bid) {
 }
 
 // ── Status Modal ──────────────────────────────────────────────────────────────
-function StatusModal({ bid, onClose, onSave }) {
+export function StatusModal({ bid, onClose, onSave }) {
   const [status, setStatus]             = useState(bid.status_override || bid.status || 'Pending');
   const [notes, setNotes]               = useState(bid.user_notes || '');
   const [awardAmt, setAwardAmt]         = useState(bid.award_amount ?? '');
