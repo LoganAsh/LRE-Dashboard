@@ -42,6 +42,18 @@ function barCountFromSpacing(span, spacing, buffer) {
   return Math.floor(usable / spacing) + 1;
 }
 
+// Auto-centered layout: given a span and O.C. spacing, fit as many full spacing
+// intervals as possible (count = floor(span/spacing)), then center the resulting
+// group so leftover space splits evenly as a buffer on each edge.
+function autoCenterLayout(span, spacing) {
+  if (!span || !spacing || spacing <= 0) return { count: 0, buffer: 0 };
+  const count = Math.floor(span / spacing);
+  if (count <= 0) return { count: 0, buffer: span / 2 };
+  const occupied = (count - 1) * spacing;
+  const buffer = (span - occupied) / 2;
+  return { count, buffer };
+}
+
 // Equal spacing: given a span, buffer, and desired bar count, compute the O.C. spacing
 function equalSpacing(span, buffer, count) {
   if (!span || count < 2) return 0;
@@ -94,7 +106,7 @@ function CrossSectionView({ footing, wall, calc }) {
 
   // Footing longitudinal bars (fixed O.C. spacing across width) — dots, one row per stacked "row"
   const fLongSpacingVal = parseFloat(footing.longSpacing) || 0;
-  const fLongBufferVal = parseFloat(footing.longBuffer) || 0;
+  const fLongBufferVal = calc.fLongBufferCalc || 0;
   const fLongPositions = [];
   for (let i = 0; i < calc.fLongCount; i++) fLongPositions.push(fLongBufferVal + i * fLongSpacingVal);
   const fLongRows = Math.max(1, parseInt(footing.longRows) || 1);
@@ -208,12 +220,12 @@ function CrossSectionView({ footing, wall, calc }) {
 export default function Takeoff() {
   const [footing, setFooting] = useState({
     length: '', width: '', height: '',
-    longSpacing: '', longBuffer: '0.25', longRows: '1', longBarSize: '#4',
+    longSpacing: '', longRows: '1', longBarSize: '#4',
     transverseSpacing: '', transverseBuffer: '0.25', transverseRows: '1', transBarSize: '#4',
   });
   const [wall, setWall] = useState({
     length: '', width: '', height: '',
-    vertSpacing: '', vertBuffer: '0.5', vertBarSize: '#4',
+    vertSpacing: '', vertBarSize: '#4',
     horizSpacing: '', horizBuffer: '0.25', horizRows: '1', horizBarSize: '#4',
     embedment: '',
   });
@@ -240,7 +252,9 @@ export default function Takeoff() {
 
     // Footing longitudinal — fixed O.C. spacing, across width, running the length
     const fLongRows = Math.max(1, parseInt(footing.longRows) || 1);
-    const fLongCount = barCountFromSpacing(fW, parseFloat(footing.longSpacing) || 0, parseFloat(footing.longBuffer) || 0);
+    const fLongLayout = autoCenterLayout(fW, parseFloat(footing.longSpacing) || 0);
+    const fLongCount = fLongLayout.count;
+    const fLongBufferCalc = fLongLayout.buffer;
     const fLongLF = fLongCount * fL * fLongRows;
     const fLongWeight = fLongLF * (REBAR_WEIGHTS[footing.longBarSize] || 0);
 
@@ -251,7 +265,9 @@ export default function Takeoff() {
     const fTransWeight = fTransLF * (REBAR_WEIGHTS[footing.transBarSize] || 0);
 
     // Wall vertical — fixed O.C. spacing, across length, running height + embedment
-    const vertCount = barCountFromSpacing(wL, parseFloat(wall.vertSpacing) || 0, parseFloat(wall.vertBuffer) || 0);
+    const vertLayout = autoCenterLayout(wL, parseFloat(wall.vertSpacing) || 0);
+    const vertCount = vertLayout.count;
+    const vertBufferCalc = vertLayout.buffer;
     const barsPerCurtain = wW > 0.8 ? 2 : 1;
     const wVertLF = vertCount * (wH + embedment) * barsPerCurtain;
     const wVertWeight = wVertLF * (REBAR_WEIGHTS[wall.vertBarSize] || 0);
@@ -293,9 +309,9 @@ export default function Takeoff() {
 
     return {
       footingCY, wallCY, totalCY,
-      fLongCount, fLongLF, fLongWeight, fLongRows,
+      fLongCount, fLongLF, fLongWeight, fLongRows, fLongBufferCalc,
       fTransCount, fTransLF, fTransWeight, fTransRows,
-      vertCount, wVertLF, wVertWeight,
+      vertCount, wVertLF, wVertWeight, vertBufferCalc,
       wHorizCount, wHorizLF, wHorizWeight, wHorizRows,
       totalRebarLF, totalRebarWeight, materialList,
     };
@@ -334,13 +350,15 @@ export default function Takeoff() {
 
             <Section title="Footing Rebar" color="#e8c547" />
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Longitudinal (runs the length)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 60px', gap: 8 }}>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Longitudinal (runs the length — auto-centered across width)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
                 <NumField label="O.C. Spacing" value={footing.longSpacing} onChange={v => setF('longSpacing', v)} suffix="ft" />
-                <NumField label="Edge Buffer" value={footing.longBuffer} onChange={v => setF('longBuffer', v)} suffix="ft" />
                 <NumField label="Rows" value={footing.longRows} onChange={v => setF('longRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(footing.longBarSize, v => setF('longBarSize', v))}</div>
               </div>
+              {results.fLongCount > 0 && (
+                <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.fLongCount} bars, {fmtNum(results.fLongBufferCalc)} ft buffer each edge</div>
+              )}
             </div>
             <div>
               <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Transverse (perpendicular, ties the mat)</div>
@@ -367,12 +385,14 @@ export default function Takeoff() {
 
             <Section title="Wall Rebar" color="#2ebd7e" />
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Vertical (runs the height + embedment)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 60px', gap: 8 }}>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Vertical (runs the height + embedment — auto-centered across length)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: 8, marginBottom: 6 }}>
                 <NumField label="O.C. Spacing" value={wall.vertSpacing} onChange={v => setW('vertSpacing', v)} suffix="ft" />
-                <NumField label="End Buffer" value={wall.vertBuffer} onChange={v => setW('vertBuffer', v)} suffix="ft" />
                 <div><Label>Size</Label>{barSizeSelect(wall.vertBarSize, v => setW('vertBarSize', v))}</div>
               </div>
+              {results.vertCount > 0 && (
+                <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.vertCount} bars, {fmtNum(results.vertBufferCalc)} ft buffer each end</div>
+              )}
             </div>
             <div>
               <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Horizontal (runs the length)</div>
