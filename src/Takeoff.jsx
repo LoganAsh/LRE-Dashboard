@@ -265,13 +265,39 @@ export default function Takeoff() {
     const totalRebarLF = fLongLF + fTransLF + wVertLF + wHorizLF;
     const totalRebarWeight = fLongWeight + fTransWeight + wVertWeight + wHorizWeight;
 
+    // Material list — group all four rebar categories by bar size
+    const byBar = {};
+    const addToBar = (size, lf, weight, source) => {
+      if (lf <= 0) return;
+      if (!byBar[size]) byBar[size] = { size, lf: 0, weight: 0, sources: [] };
+      byBar[size].lf += lf;
+      byBar[size].weight += weight;
+      byBar[size].sources.push({ source, lf });
+    };
+    addToBar(footing.longBarSize, fLongLF, fLongWeight, 'Footing Long.');
+    addToBar(footing.transBarSize, fTransLF, fTransWeight, 'Footing Trans.');
+    addToBar(wall.vertBarSize, wVertLF, wVertWeight, 'Wall Vert.');
+    addToBar(wall.horizBarSize, wHorizLF, wHorizWeight, 'Wall Horiz.');
+
+    const materialList = Object.values(byBar)
+      .map(b => ({
+        ...b,
+        sticks20: Math.ceil(b.lf / 20),
+        sticks40: Math.ceil(b.lf / 40),
+      }))
+      .sort((a, b) => {
+        const numA = parseInt(a.size.replace('#', ''));
+        const numB = parseInt(b.size.replace('#', ''));
+        return numA - numB;
+      });
+
     return {
       footingCY, wallCY, totalCY,
       fLongCount, fLongLF, fLongWeight, fLongRows,
       fTransCount, fTransLF, fTransWeight, fTransRows,
       vertCount, wVertLF, wVertWeight,
       wHorizCount, wHorizLF, wHorizWeight, wHorizRows,
-      totalRebarLF, totalRebarWeight,
+      totalRebarLF, totalRebarWeight, materialList,
     };
   }, [footing, wall, wasteFactor]);
 
@@ -406,6 +432,47 @@ export default function Takeoff() {
               <StatBox label="Total LF" value={fmtNum(results.wVertLF + results.wHorizLF)} />
               <StatBox label="Total Weight" value={`${fmtNum(results.wVertWeight + results.wHorizWeight, 0)} lbs`} />
             </div>
+          </div>
+
+          {/* Material List by Bar Size */}
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+            <Section title="Rebar Material List" />
+            {results.materialList.length === 0 ? (
+              <div style={{ color: 'var(--muted)', fontSize: 12, padding: '8px 0' }}>Enter dimensions and rebar spacing to generate a material list.</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
+                  <thead>
+                    <tr>
+                      {['Bar Size', 'Total LF', 'Weight (lbs)', '20ft Sticks', '40ft Sticks', 'Used In'].map(h => (
+                        <th key={h} style={{ padding: '6px 8px', textAlign: h === 'Bar Size' || h === 'Used In' ? 'left' : 'right', fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.materialList.map(b => (
+                      <tr key={b.size} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '8px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13 }}>{b.size}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{fmtNum(b.lf)}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{fmtNum(b.weight, 0)}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>{b.sticks20}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>{b.sticks40}</td>
+                        <td style={{ padding: '8px', fontSize: 10, color: 'var(--muted)' }}>{b.sources.map(s => s.source).join(', ')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: 'var(--surface2)' }}>
+                      <td style={{ padding: '8px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12 }}>Total</td>
+                      <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600 }}>{fmtNum(results.materialList.reduce((s,b)=>s+b.lf,0))}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600 }}>{fmtNum(results.materialList.reduce((s,b)=>s+b.weight,0), 0)}</td>
+                      <td colSpan={3} />
+                    </tr>
+                  </tfoot>
+                </table>
+                <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 8 }}>Stick counts assume standard 20ft or 40ft mill lengths, rounded up per bar size (no cutting waste applied).</div>
+              </div>
+            )}
           </div>
 
           {/* Grand Totals */}
