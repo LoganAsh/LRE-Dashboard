@@ -35,8 +35,9 @@ export default function App() {
       const resp = await fetch(SYNC_FUNCTION_URL, { method: 'POST' });
       const json = await resp.json();
       if (json.success) {
-        setSyncMsg(`Synced ${json.rows_upserted} rows`);
-        await refetch();
+        setSyncMsg(`Synced ${json.rows_upserted} rows — refreshing…`);
+        window.location.reload();
+        return;
       } else {
         setSyncMsg(`Error: ${json.error}`);
       }
