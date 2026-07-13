@@ -115,9 +115,21 @@ function CrossSectionView({ footing, wall, calc }) {
   // Footing transverse bars — shown as dashed lines across the width, one per row
   const fTransRows = Math.max(1, parseInt(footing.transverseRows) || 1);
 
-  // Wall vertical bars — 1 or 2 curtains depending on thickness, extending into footing by embedment
-  const wallBarInset = 0.15;
-  const wallBarXs = wW > 0.8 ? [wallX + wallBarInset, wallX + wW - wallBarInset] : [wallX + wW / 2];
+  // Wall vertical bars — number of curtains set explicitly via Rows, spaced by Row Spacing (front-to-back in wall thickness)
+  const vertRowsVal = Math.max(1, parseInt(wall.vertRows) || 1);
+  const vertRowSpacingVal = parseFloat(wall.vertRowSpacing) || 0;
+  const wallBarInset = 0.1;
+  const wallBarXs = (() => {
+    if (vertRowsVal === 1) return [wallX + wW / 2];
+    if (vertRowSpacingVal > 0) {
+      // center the curtains using actual row spacing
+      const totalSpan = (vertRowsVal - 1) * vertRowSpacingVal;
+      const start = wallX + wW / 2 - totalSpan / 2;
+      return Array.from({ length: vertRowsVal }, (_, i) => start + i * vertRowSpacingVal);
+    }
+    // fallback: distribute evenly with inset if no row spacing given
+    return Array.from({ length: vertRowsVal }, (_, i) => wallX + wallBarInset + i * ((wW - 2 * wallBarInset) / Math.max(vertRowsVal - 1, 1)));
+  })();
   const vertBarTop = wallY + 0.08;
   const embedBottomLimit = footingY + cover; // don't draw past the footing's own cover
   const vertBarBottom = embedment > 0
@@ -146,23 +158,25 @@ function CrossSectionView({ footing, wall, calc }) {
         <>
           <rect x={footingX} y={footingY} width={fW} height={fH} fill="rgba(122,130,152,0.25)" stroke="#7a8298" strokeWidth={0.04} />
 
-          {/* Footing longitudinal bars — dots, one row per stacked layer within footing depth */}
+          {/* Footing longitudinal bars — dots, one row per stacked layer, spaced by actual row spacing */}
           {Array.from({ length: fLongRows }).map((_, r) => {
-            const rowY = fLongRows === 1
-              ? footingY + fH - cover
-              : footingY + cover + r * ((fH - cover * 2) / Math.max(fLongRows - 1, 1));
+            const rowSpacingVal = parseFloat(footing.longRowSpacing) || 0;
+            const rowY = rowSpacingVal > 0
+              ? footingY + fH - cover - r * rowSpacingVal
+              : (fLongRows === 1 ? footingY + fH - cover : footingY + cover + r * ((fH - cover * 2) / Math.max(fLongRows - 1, 1)));
             return fLongPositions.map((x, i) => (
-              <circle key={`fl-${r}-${i}`} cx={footingX + x} cy={rowY} r={0.055} fill="#e8c547" stroke="#0a0c10" strokeWidth={0.015} />
+              <circle key={`fl-${r}-${i}`} cx={footingX + x} cy={Math.max(footingY + cover * 0.5, rowY)} r={0.055} fill="#e8c547" stroke="#0a0c10" strokeWidth={0.015} />
             ));
           })}
 
-          {/* Footing transverse bars — dashed horizontal lines across the width, one per row */}
+          {/* Footing transverse bars — dashed horizontal lines across the width, spaced by actual row spacing */}
           {Array.from({ length: fTransRows }).map((_, r) => {
-            const rowY = fTransRows === 1
-              ? footingY + fH - cover - 0.12
-              : footingY + cover + 0.12 + r * ((fH - cover * 2 - 0.24) / Math.max(fTransRows - 1, 1));
+            const transRowSpacingVal = parseFloat(footing.transverseRowSpacing) || 0;
+            const rowY = transRowSpacingVal > 0
+              ? footingY + fH - cover - 0.12 - r * transRowSpacingVal
+              : (fTransRows === 1 ? footingY + fH - cover - 0.12 : footingY + cover + 0.12 + r * ((fH - cover * 2 - 0.24) / Math.max(fTransRows - 1, 1)));
             return (
-              <line key={`ft-${r}`} x1={footingX + 0.05} y1={rowY} x2={footingX + fW - 0.05} y2={rowY} stroke="#f97316" strokeWidth={0.03} strokeDasharray="0.12,0.08" />
+              <line key={`ft-${r}`} x1={footingX + 0.05} y1={Math.max(footingY + cover * 0.3, rowY)} x2={footingX + fW - 0.05} y2={Math.max(footingY + cover * 0.3, rowY)} stroke="#f97316" strokeWidth={0.03} strokeDasharray="0.12,0.08" />
             );
           })}
 
@@ -220,12 +234,12 @@ function CrossSectionView({ footing, wall, calc }) {
 export default function Takeoff() {
   const [footing, setFooting] = useState({
     length: '', width: '', height: '',
-    longSpacing: '', longRows: '1', longBarSize: '#4',
-    transverseSpacing: '', transverseBuffer: '0.25', transverseRows: '1', transBarSize: '#4',
+    longSpacing: '', longRows: '1', longRowSpacing: '', longBarSize: '#4',
+    transverseSpacing: '', transverseBuffer: '0.25', transverseRows: '1', transverseRowSpacing: '', transBarSize: '#4',
   });
   const [wall, setWall] = useState({
     length: '', width: '', height: '',
-    vertSpacing: '', vertBarSize: '#4',
+    vertSpacing: '', vertRows: '1', vertRowSpacing: '', vertBarSize: '#4',
     horizSpacing: '', horizBuffer: '0.25', horizRows: '1', horizBarSize: '#4',
     embedment: '',
   });
@@ -268,14 +282,14 @@ export default function Takeoff() {
     const vertLayout = autoCenterLayout(wL, parseFloat(wall.vertSpacing) || 0);
     const vertCount = vertLayout.count;
     const vertBufferCalc = vertLayout.buffer;
-    const barsPerCurtain = wW > 0.8 ? 2 : 1;
-    const wVertLF = vertCount * (wH + embedment) * barsPerCurtain;
+    const vertRows = Math.max(1, parseInt(wall.vertRows) || 1); // curtains front-to-back in wall thickness
+    const wVertLF = vertCount * (wH + embedment) * vertRows;
     const wVertWeight = wVertLF * (REBAR_WEIGHTS[wall.vertBarSize] || 0);
 
-    // Wall horizontal — fixed spacing, across height, running the length
+    // Wall horizontal — fixed spacing, across height, running the length (uses same curtain count as vertical)
     const wHorizRows = Math.max(1, parseInt(wall.horizRows) || 1);
     const wHorizCount = barCountFromSpacing(wH, parseFloat(wall.horizSpacing) || 0, parseFloat(wall.horizBuffer) || 0);
-    const wHorizLF = wHorizCount * wL * wHorizRows * barsPerCurtain;
+    const wHorizLF = wHorizCount * wL * wHorizRows * vertRows;
     const wHorizWeight = wHorizLF * (REBAR_WEIGHTS[wall.horizBarSize] || 0);
 
     const totalRebarLF = fLongLF + fTransLF + wVertLF + wHorizLF;
@@ -311,7 +325,7 @@ export default function Takeoff() {
       footingCY, wallCY, totalCY,
       fLongCount, fLongLF, fLongWeight, fLongRows, fLongBufferCalc,
       fTransCount, fTransLF, fTransWeight, fTransRows,
-      vertCount, wVertLF, wVertWeight, vertBufferCalc,
+      vertCount, wVertLF, wVertWeight, vertBufferCalc, vertRows,
       wHorizCount, wHorizLF, wHorizWeight, wHorizRows,
       totalRebarLF, totalRebarWeight, materialList,
     };
@@ -352,22 +366,30 @@ export default function Takeoff() {
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Longitudinal (runs the length — auto-centered across width)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
-                <NumField label="O.C. Spacing" value={footing.longSpacing} onChange={v => setF('longSpacing', v)} suffix="ft" />
+                <NumField label="O.C. Spacing (horiz.)" value={footing.longSpacing} onChange={v => setF('longSpacing', v)} suffix="ft" />
                 <NumField label="Rows" value={footing.longRows} onChange={v => setF('longRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(footing.longBarSize, v => setF('longBarSize', v))}</div>
               </div>
+              {parseInt(footing.longRows) > 1 && (
+                <div style={{ marginBottom: 6 }}>
+                  <NumField label="Row Spacing (vertical, between rows)" value={footing.longRowSpacing} onChange={v => setF('longRowSpacing', v)} suffix="ft" placeholder="e.g. 0.3" />
+                </div>
+              )}
               {results.fLongCount > 0 && (
                 <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.fLongCount} bars, {fmtNum(results.fLongBufferCalc)} ft buffer each edge</div>
               )}
             </div>
             <div>
               <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Transverse (perpendicular, ties the mat)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 60px', gap: 8 }}>
-                <NumField label="O.C. Spacing" value={footing.transverseSpacing} onChange={v => setF('transverseSpacing', v)} suffix="ft" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
+                <NumField label="O.C. Spacing (horiz.)" value={footing.transverseSpacing} onChange={v => setF('transverseSpacing', v)} suffix="ft" />
                 <NumField label="Edge Buffer" value={footing.transverseBuffer} onChange={v => setF('transverseBuffer', v)} suffix="ft" />
                 <NumField label="Rows" value={footing.transverseRows} onChange={v => setF('transverseRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(footing.transBarSize, v => setF('transBarSize', v))}</div>
               </div>
+              {parseInt(footing.transverseRows) > 1 && (
+                <NumField label="Row Spacing (vertical, between rows)" value={footing.transverseRowSpacing} onChange={v => setF('transverseRowSpacing', v)} suffix="ft" placeholder="e.g. 0.3" />
+              )}
             </div>
           </div>
 
@@ -386,10 +408,16 @@ export default function Takeoff() {
             <Section title="Wall Rebar" color="#2ebd7e" />
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Vertical (runs the height + embedment — auto-centered across length)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: 8, marginBottom: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
                 <NumField label="O.C. Spacing" value={wall.vertSpacing} onChange={v => setW('vertSpacing', v)} suffix="ft" />
+                <NumField label="Rows (curtains)" value={wall.vertRows} onChange={v => setW('vertRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(wall.vertBarSize, v => setW('vertBarSize', v))}</div>
               </div>
+              {parseInt(wall.vertRows) > 1 && (
+                <div style={{ marginBottom: 6 }}>
+                  <NumField label="Row Spacing (thru wall thickness)" value={wall.vertRowSpacing} onChange={v => setW('vertRowSpacing', v)} suffix="ft" placeholder="e.g. 0.5" />
+                </div>
+              )}
               {results.vertCount > 0 && (
                 <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.vertCount} bars, {fmtNum(results.vertBufferCalc)} ft buffer each end</div>
               )}
@@ -447,7 +475,7 @@ export default function Takeoff() {
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Wall Rebar" color="#2ebd7e" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10, marginBottom: 10 }}>
-              <StatBox label="Vertical Bars" value={results.vertCount} sub={`${wall.vertBarSize} · ${fmtNum(results.wVertLF)} LF (incl. embed.)`} />
+              <StatBox label="Vertical Bars" value={`${results.vertCount} × ${results.vertRows} row(s)`} sub={`${wall.vertBarSize} · ${fmtNum(results.wVertLF)} LF (incl. embed.)`} />
               <StatBox label="Horizontal Bars" value={`${results.wHorizCount} × ${results.wHorizRows} row(s)`} sub={`${wall.horizBarSize} · ${fmtNum(results.wHorizLF)} LF`} />
               <StatBox label="Total LF" value={fmtNum(results.wVertLF + results.wHorizLF)} />
               <StatBox label="Total Weight" value={`${fmtNum(results.wVertWeight + results.wHorizWeight, 0)} lbs`} />
