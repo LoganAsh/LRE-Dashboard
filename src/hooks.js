@@ -109,3 +109,39 @@ export function parseClients(raw) {
     .map(s => s.replace(/^Sub-/i, '').trim())
     .filter(s => s.length > 0 && s.toLowerCase() !== 'nan');
 }
+
+// Fetch all bid placements (Place + %High/Low per bid+client) in one query
+export function usePlacements() {
+  const [placements, setPlacements] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('lre_bid_placements').select('*').then(({ data }) => {
+      setPlacements(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  return { placements, loading };
+}
+
+// Average %High/Low and place distribution, optionally filtered to a client name
+export function placementStats(placements, clientName = null) {
+  const filtered = clientName
+    ? placements.filter(p => p.client_name.trim().toLowerCase() === clientName.toLowerCase())
+    : placements;
+
+  const withPct = filtered.filter(p => p.pct_high_low !== null && p.pct_high_low !== undefined);
+  const avgPctHighLow = withPct.length
+    ? withPct.reduce((s, p) => s + Number(p.pct_high_low), 0) / withPct.length
+    : null;
+
+  const withPlace = filtered.filter(p => p.place !== null && p.place !== undefined);
+  const avgPlace = withPlace.length
+    ? withPlace.reduce((s, p) => s + Number(p.place), 0) / withPlace.length
+    : null;
+
+  const firstPlaceCount = withPlace.filter(p => Number(p.place) === 1).length;
+
+  return { count: filtered.length, avgPctHighLow, avgPlace, firstPlaceCount, withPct, withPlace };
+}

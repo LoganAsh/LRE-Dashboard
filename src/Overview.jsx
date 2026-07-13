@@ -4,7 +4,7 @@ import {
   LineElement, PointElement, ArcElement, Tooltip, Legend, Filler,
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import { useBidStats, useMonthlyData } from './hooks.js';
+import { useBidStats, useMonthlyData, usePlacements, placementStats } from './hooks.js';
 import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, filterByType } from './utils.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler);
@@ -23,6 +23,12 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
   const typedBids = filterByType(bids, typeFilter);
   const stats = useBidStats(typedBids, yearFilter);
   const monthly = useMonthlyData(typedBids, yearFilter);
+  const { placements } = usePlacements();
+
+  // Filter placements to bids currently in view (respects year + type filter)
+  const visibleBidIds = useMemo(() => new Set(typedBids.map(b => b.id)), [typedBids]);
+  const visiblePlacements = useMemo(() => placements.filter(p => visibleBidIds.has(p.bid_id)), [placements, visibleBidIds]);
+  const placeStats = useMemo(() => placementStats(visiblePlacements), [visiblePlacements]);
 
   const volumeChart = useMemo(() => ({
     labels: monthly.map(m => m.month.slice(5)),
@@ -134,6 +140,20 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
         <KPI label="Win Rate" value={`${stats.winRate.toFixed(0)}%`} sub={`${stats.lost.length} confirmed losses`} />
         <KPI label="Avg Margin" value={`${(stats.avgMargin * 100).toFixed(1)}%`} sub={`${fmt$(stats.totalMargin)} total margin $`} />
       </div>
+
+      {/* Bid Placement KPIs */}
+      {placeStats.count > 0 && (
+        <div className="kpi-grid" style={{ marginTop: -6 }}>
+          <KPI
+            label="Avg % High/Low"
+            value={placeStats.avgPctHighLow !== null ? `${placeStats.avgPctHighLow > 0 ? '+' : ''}${placeStats.avgPctHighLow.toFixed(1)}%` : '—'}
+            sub={placeStats.avgPctHighLow !== null ? (placeStats.avgPctHighLow > 0 ? 'high vs. competition' : 'low vs. competition') : 'no data yet'}
+            accent={placeStats.avgPctHighLow !== null && placeStats.avgPctHighLow < 0 ? 'won' : undefined}
+          />
+          <KPI label="Avg Bid Place" value={placeStats.avgPlace !== null ? placeStats.avgPlace.toFixed(1) : '—'} sub={`${placeStats.withPlace.length} bids tracked`} />
+          <KPI label="1st Place Finishes" value={placeStats.firstPlaceCount} sub={`of ${placeStats.withPlace.length} tracked results`} accent="won" />
+        </div>
+      )}
 
       {/* Charts row 1 */}
       <div className="chart-grid">

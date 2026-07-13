@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { supabase } from './supabase.js';
 import { fmtFull$, fmt$, classifyStatus, YEARS, filterByType, isPublicBid } from './utils.js';
 import { parseClients, useTopClients } from './hooks.js';
@@ -46,6 +46,29 @@ export function StatusModal({ bid, onClose, onSave }) {
   const [saving, setSaving]             = useState(false);
   const [error, setError]               = useState('');
 
+  // Placement (Place + %High/Low) tracked per client
+  const [placements, setPlacements] = useState(() =>
+    Object.fromEntries(clientNames.map(c => [c, { place: '', pct_high_low: '' }]))
+  );
+
+  useEffect(() => {
+    supabase.from('lre_bid_placements').select('*').eq('bid_id', bid.id).then(({ data }) => {
+      if (data && data.length > 0) {
+        setPlacements(prev => {
+          const next = { ...prev };
+          data.forEach(row => {
+            next[row.client_name] = { place: row.place ?? '', pct_high_low: row.pct_high_low ?? '' };
+          });
+          return next;
+        });
+      }
+    });
+  }, [bid.id]);
+
+  const updatePlacement = (clientName, key, value) => {
+    setPlacements(prev => ({ ...prev, [clientName]: { ...prev[clientName], [key]: value } }));
+  };
+
   const today = new Date().toISOString().split('T')[0];
   const setNextPreset = (days) => {
     const d = new Date(); d.setDate(d.getDate() + days);
@@ -65,13 +88,28 @@ export function StatusModal({ bid, onClose, onSave }) {
       awarded_by: status === 'Won' ? (awardedBy || null) : null,
       high_priority: highPriority,
     }).eq('id', bid.id);
+    if (err) { setSaving(false); setError(err.message); return; }
+
+    // Save placements per client (only rows with a value entered)
+    const placementRows = clientNames
+      .filter(c => placements[c] && (placements[c].place !== '' || placements[c].pct_high_low !== ''))
+      .map(c => ({
+        bid_id: bid.id,
+        client_name: c,
+        place: placements[c].place !== '' ? parseInt(placements[c].place) : null,
+        pct_high_low: placements[c].pct_high_low !== '' ? parseFloat(placements[c].pct_high_low) : null,
+      }));
+    if (placementRows.length > 0) {
+      const { error: placeErr } = await supabase.from('lre_bid_placements').upsert(placementRows, { onConflict: 'bid_id,client_name' });
+      if (placeErr) { setSaving(false); setError(placeErr.message); return; }
+    }
+
     setSaving(false);
-    if (err) { setError(err.message); return; }
     onSave({ ...bid, status_override: status, effective_status: status, user_notes: notes,
       award_amount: awardNum, last_followup_date: lastFollowup || null,
       next_followup_date: nextFollowup || null, projected_profit: profit,
       awarded_by: status === 'Won' ? (awardedBy || null) : null,
-      high_priority: highPriority });
+      high_priority: highPriority, placements });
     onClose();
   };
 
@@ -125,6 +163,33 @@ export function StatusModal({ bid, onClose, onSave }) {
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Award Amount <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(updates profit calculation)</span></label>
             <input type="number" placeholder="Enter award amount if won…" value={awardAmt} onChange={e => setAwardAmt(e.target.value)} style={field} />
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+              Bid Results {clientNames.length > 1 && <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(one per client)</span>}
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {clientNames.map(c => (
+                <div key={c} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px', gap: 8, alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c}</div>
+                  <input
+                    type="number" min="1" placeholder="Place"
+                    value={placements[c]?.place ?? ''}
+                    onChange={e => updatePlacement(c, 'place', e.target.value)}
+                    style={{ ...field, textAlign: 'center', padding: '6px 4px' }}
+                    title="What place our bid finished (1 = low bid)"
+                  />
+                  <input
+                    type="number" step="0.1" placeholder="% High/Low"
+                    value={placements[c]?.pct_high_low ?? ''}
+                    onChange={e => updatePlacement(c, 'pct_high_low', e.target.value)}
+                    style={{ ...field, textAlign: 'center', padding: '6px 4px' }}
+                    title="Positive = we were X% high, negative = we were X% low"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Status</label>

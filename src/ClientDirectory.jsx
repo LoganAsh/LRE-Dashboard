@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from './supabase.js';
-import { parseClients } from './hooks.js';
+import { parseClients, usePlacements, placementStats } from './hooks.js';
 import { fmt$, fmtFull$ } from './utils.js';
 import { StatusModal } from './BidLog.jsx';
 
@@ -68,6 +68,9 @@ function ClientDetail({ clientName, bids, onClose }) {
     return { won, lost, pending, totalVolume, awardedVolume, winRate, avgMargin };
   }, [clientBids, clientName]);
 
+  const { placements } = usePlacements();
+  const clientPlaceStats = useMemo(() => placementStats(placements, clientName), [placements, clientName]);
+
   const projectStats = useMemo(() => {
     const totalContract = projects.reduce((s, p) => s + (p.original_contract || 0) + (p.approved_cos || 0), 0);
     const totalActual = projects.reduce((s, p) => s + (p.actual_cost || 0), 0);
@@ -129,7 +132,7 @@ function ClientDetail({ clientName, bids, onClose }) {
             ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
             <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '12px 14px' }}>
               <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Total Bid Volume</div>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>{fmt$(stats.totalVolume)}</div>
@@ -139,6 +142,25 @@ function ClientDetail({ clientName, bids, onClose }) {
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--won)' }}>{fmt$(stats.awardedVolume)}</div>
             </div>
           </div>
+
+          {clientPlaceStats.count > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
+              <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
+                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Avg % High/Low</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: clientPlaceStats.avgPctHighLow !== null && clientPlaceStats.avgPctHighLow < 0 ? 'var(--won)' : 'var(--text)' }}>
+                  {clientPlaceStats.avgPctHighLow !== null ? `${clientPlaceStats.avgPctHighLow > 0 ? '+' : ''}${clientPlaceStats.avgPctHighLow.toFixed(1)}%` : '—'}
+                </div>
+              </div>
+              <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
+                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Avg Place</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{clientPlaceStats.avgPlace !== null ? clientPlaceStats.avgPlace.toFixed(1) : '—'}</div>
+              </div>
+              <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
+                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>1st Place Finishes</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--won)' }}>{clientPlaceStats.firstPlaceCount} / {clientPlaceStats.withPlace.length}</div>
+              </div>
+            </div>
+          )}
 
           {/* Projects section */}
           <div style={{ marginBottom: 24 }}>
@@ -195,6 +217,7 @@ function ClientDetail({ clientName, bids, onClose }) {
                 const pill = wonByOther ? { bg: 'rgba(58,63,82,0.3)', color: 'var(--muted)' } : (STATUS_PILL[eff] || STATUS_PILL['Pending']);
                 const showAwarded = eff === 'Won' && !wonByOther && b.award_amount > 0;
                 const displayAmount = showAwarded ? b.award_amount : b.bid_amount;
+                const bidPlacement = placements.find(p => p.bid_id === b.id && p.client_name.trim().toLowerCase() === clientName.toLowerCase());
                 return (
                   <button key={b.id ?? i} onClick={() => setModalBid(b)} style={{
                     background: 'var(--surface2)', borderRadius: 6, padding: '8px 12px',
@@ -207,6 +230,14 @@ function ClientDetail({ clientName, bids, onClose }) {
                   >
                     <span style={{ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>{b.bid_date}</span>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</span>
+                    {bidPlacement && bidPlacement.place && (
+                      <span style={{ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>#{bidPlacement.place}</span>
+                    )}
+                    {bidPlacement && bidPlacement.pct_high_low !== null && bidPlacement.pct_high_low !== undefined && (
+                      <span style={{ fontSize: 10, color: Number(bidPlacement.pct_high_low) < 0 ? 'var(--won)' : 'var(--lost)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {Number(bidPlacement.pct_high_low) > 0 ? '+' : ''}{Number(bidPlacement.pct_high_low).toFixed(1)}%
+                      </span>
+                    )}
                     <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: showAwarded ? 'var(--won)' : 'var(--muted)', fontWeight: showAwarded ? 600 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtFull$(displayAmount)}</span>
                     <span style={{ padding: '2px 7px', borderRadius: 3, fontSize: 10, fontWeight: 600, background: pill.bg, color: pill.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{displayStatus}</span>
                   </button>
