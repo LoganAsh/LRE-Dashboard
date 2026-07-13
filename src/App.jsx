@@ -5,13 +5,14 @@ import { SYNC_FUNCTION_URL } from './supabase.js';
 import BidDashboard from './BidDashboard.jsx';
 import Projects from './Projects.jsx';
 import WeeklySchedule from './WeeklySchedule.jsx';
+import Takeoff from './Takeoff.jsx';
 import ClientDirectory from './ClientDirectory.jsx';
 import Overview from './Overview.jsx';
 import Trends from './Trends.jsx';
 import Clients from './Clients.jsx';
 import BidLog from './BidLog.jsx';
 
-const TABS = ['Bid Dashboard', 'Overview', 'Trends', 'Clients', 'Client Analytics', 'Bid Log', 'Projects', 'Weekly Schedule'];
+const TABS = ['Bid Dashboard', 'Overview', 'Trends', 'Clients', 'Client Analytics', 'Bid Log', 'Projects', 'Weekly Schedule', 'Takeoff'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('Bid Dashboard');
@@ -102,6 +103,7 @@ export default function App() {
           {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}
           {activeTab === 'Projects' && <Projects bids={bids} />}
           {activeTab === 'Weekly Schedule' && <WeeklySchedule />}
+          {activeTab === 'Takeoff' && <Takeoff />}
           {activeTab === 'Overview' && <Overview bids={bids} yearFilter={yearFilter} setYearFilter={setYearFilter} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />}
           {activeTab === 'Trends' && <Trends bids={bids} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />}
           {activeTab === 'Clients' && <ClientDirectory bids={bids} />}
