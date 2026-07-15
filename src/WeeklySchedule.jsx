@@ -428,7 +428,7 @@ function PlanCard({ plan, project, sovCategories, allCrew, allEquipment, allProj
                 {detail.workItems.map(w=>(
                   <div key={w.id} style={{background:'var(--surface2)',borderRadius:6,padding:'10px 12px'}}>
                     <div style={{display:'flex',gap:8,alignItems:'baseline',marginBottom:4}}>
-                      {w.sov_category && <span style={{fontSize:10,padding:'1px 6px',background:'rgba(59,111,232,0.15)',border:'1px solid rgba(59,111,232,0.3)',borderRadius:3,color:'var(--accent)',whiteSpace:'nowrap'}}>{w.sov_category}</span>}
+                      {w.sov_category && <span style={{fontSize:10,padding:'1px 6px',background:'rgba(249,115,22,0.15)',border:'1px solid rgba(249,115,22,0.3)',borderRadius:3,color:'var(--accent)',whiteSpace:'nowrap'}}>{w.sov_category}</span>}
                       <span style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:13}}>{w.description}</span>
                     </div>
                     {w.notes && <div style={{color:'var(--muted)',fontSize:11,marginBottom:6}}>{w.notes}</div>}

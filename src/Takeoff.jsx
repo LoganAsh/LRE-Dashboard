@@ -187,7 +187,7 @@ function CrossSectionView({ footing, wall, calc }) {
       {/* Wall */}
       {wW > 0 && wH > 0 && (
         <>
-          <rect x={wallX} y={wallY} width={wW} height={wH} fill="rgba(59,111,232,0.18)" stroke="#3B6FE8" strokeWidth={0.04} />
+          <rect x={wallX} y={wallY} width={wW} height={wH} fill="rgba(249,115,22,0.18)" stroke="#f97316" strokeWidth={0.04} />
 
           {/* Wall vertical bars — extend down into footing by embedment amount */}
           {wallBarXs.map((x, i) => (
@@ -395,7 +395,7 @@ export default function Takeoff() {
 
           {/* Wall inputs */}
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
-            <Section title="Wall Dimensions" color="#3B6FE8" />
+            <Section title="Wall Dimensions" color="#f97316" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
               <NumField label="Length" value={wall.length} onChange={v => setW('length', v)} suffix="ft" />
               <NumField label="Width" value={wall.width} onChange={v => setW('width', v)} suffix="ft" />

@@ -222,7 +222,7 @@ export default function BidDashboard({ bids: initialBids }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Upcoming Bids</div>
-            <div style={{ padding: '2px 8px', background: 'rgba(59,111,232,0.15)', border: '1px solid rgba(59,111,232,0.3)', borderRadius: 10, fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{upcomingBids.length}</div>
+            <div style={{ padding: '2px 8px', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 10, fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{upcomingBids.length}</div>
           </div>
           {upcomingBids.length === 0
             ? <div style={{ color: 'var(--muted)', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>No upcoming bids</div>
