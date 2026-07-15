@@ -11,7 +11,7 @@ const DEFAULT_SOV = [
 const STATUS_COLORS = {
   'Not Started': { color: '#7a8298', bg: 'rgba(122,130,152,0.12)' },
   'Mobilizing':  { color: '#e8c547', bg: 'rgba(232,197,71,0.12)'  },
-  'Active':      { color: '#3B6FE8', bg: 'rgba(59,111,232,0.12)'  },
+  'Active':      { color: '#f97316', bg: 'rgba(249,115,22,0.12)'  },
   'Punch List':  { color: '#f97316', bg: 'rgba(249,115,22,0.12)'  },
   'Complete':    { color: '#2ebd7e', bg: 'rgba(46,189,126,0.12)'  },
 };

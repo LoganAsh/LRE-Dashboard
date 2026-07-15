@@ -92,7 +92,7 @@ function ClientDetail({ clientName, bids, onClose }) {
   };
 
   const PROJECT_STATUS_COLORS = {
-    'Not Started': '#7a8298', 'Mobilizing': '#e8c547', 'Active': '#3B6FE8',
+    'Not Started': '#7a8298', 'Mobilizing': '#e8c547', 'Active': '#f97316',
     'Punch List': '#f97316', 'Complete': '#2ebd7e',
   };
 

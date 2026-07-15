@@ -10,16 +10,16 @@ export const fmtFull$ = (v) =>
 export const fmtPct = (v) => `${(v * 100).toFixed(1)}%`;
 
 export const CHART_COLORS = {
-  accent: '#3B6FE8',
-  accentAlpha: 'rgba(59,111,232,0.55)',
-  accentLight: 'rgba(59,111,232,0.1)',
-  blue2: '#6b9ff0',
-  blue2Alpha: 'rgba(107,159,240,0.5)',
-  won: '#2ebd7e',
-  wonAlpha: 'rgba(46,189,126,0.7)',
-  lost: '#e85c50',
-  pending: '#7a8298',
-  pendingAlpha: 'rgba(122,130,152,0.4)',
+  accent: '#f97316',
+  accentAlpha: 'rgba(249,115,22,0.55)',
+  accentLight: 'rgba(249,115,22,0.1)',
+  blue2: '#fb923c',
+  blue2Alpha: 'rgba(251,146,60,0.5)',
+  won: '#16a34a',
+  wonAlpha: 'rgba(22,163,74,0.7)',
+  lost: '#dc2626',
+  pending: '#8a8580',
+  pendingAlpha: 'rgba(138,133,128,0.4)',
 };
 
 // Reads CSS variables so charts respond to light/dark theme
@@ -28,13 +28,13 @@ function getCSSVar(name) {
 }
 
 export function getChartDefaults() {
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  const gridColor  = isLight ? '#d0d4e0' : '#1f2330';
-  const tickColor  = isLight ? '#8289a0' : '#525870';
-  const tooltipBg  = isLight ? '#ffffff' : '#1c2030';
-  const tooltipBdr = isLight ? '#d0d4e0' : '#252a3a';
-  const tooltipTitle = isLight ? '#1a1d2e' : '#dde1ed';
-  const tooltipBody  = isLight ? '#6b7494' : '#7a8298';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor  = isDark ? '#332e29' : '#ece7e0';
+  const tickColor  = isDark ? '#8a8580' : '#8a8580';
+  const tooltipBg  = isDark ? '#1e1b17' : '#ffffff';
+  const tooltipBdr = isDark ? '#332e29' : '#ece7e0';
+  const tooltipTitle = isDark ? '#f5f3f0' : '#1a1a1a';
+  const tooltipBody  = isDark ? '#c4bfb8' : '#57534e';
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -46,18 +46,18 @@ export function getChartDefaults() {
         borderWidth: 1,
         titleColor: tooltipTitle,
         bodyColor: tooltipBody,
-        titleFont: { family: 'IBM Plex Mono' },
-        bodyFont: { family: 'IBM Plex Mono' },
+        titleFont: { family: 'Inter' },
+        bodyFont: { family: 'Inter' },
       },
     },
     scales: {
       x: {
         grid: { color: gridColor, drawBorder: false },
-        ticks: { color: tickColor, font: { family: 'IBM Plex Mono', size: 10 } },
+        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } },
       },
       y: {
         grid: { color: gridColor, drawBorder: false },
-        ticks: { color: tickColor, font: { family: 'IBM Plex Mono', size: 10 } },
+        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } },
       },
     },
   };
@@ -70,23 +70,23 @@ export const CHART_DEFAULTS = {
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: '#1c2030',
-      borderColor: '#252a3a',
+      backgroundColor: '#ffffff',
+      borderColor: '#ece7e0',
       borderWidth: 1,
-      titleColor: '#dde1ed',
-      bodyColor: '#7a8298',
-      titleFont: { family: 'IBM Plex Mono' },
-      bodyFont: { family: 'IBM Plex Mono' },
+      titleColor: '#1a1a1a',
+      bodyColor: '#57534e',
+      titleFont: { family: 'Inter' },
+      bodyFont: { family: 'Inter' },
     },
   },
   scales: {
     x: {
-      grid: { color: '#1f2330', drawBorder: false },
-      ticks: { color: '#525870', font: { family: 'IBM Plex Mono', size: 10 } },
+      grid: { color: '#ece7e0', drawBorder: false },
+      ticks: { color: '#8a8580', font: { family: 'Inter', size: 11 } },
     },
     y: {
-      grid: { color: '#1f2330', drawBorder: false },
-      ticks: { color: '#525870', font: { family: 'IBM Plex Mono', size: 10 } },
+      grid: { color: '#ece7e0', drawBorder: false },
+      ticks: { color: '#8a8580', font: { family: 'Inter', size: 11 } },
     },
   },
 };

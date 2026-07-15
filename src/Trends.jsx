@@ -25,7 +25,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
   }), [typedBids]);
 
   const barColors = [CHART_COLORS.accent, CHART_COLORS.blue2, CHART_COLORS.won, '#e85c50'];
-  const barAlphas = ['rgba(59,111,232,0.7)', 'rgba(107,159,240,0.7)', 'rgba(46,189,126,0.7)', 'rgba(232,92,80,0.7)'];
+  const barAlphas = ['rgba(249,115,22,0.7)', 'rgba(107,159,240,0.7)', 'rgba(46,189,126,0.7)', 'rgba(232,92,80,0.7)'];
 
   const volChart = useMemo(() => ({
     labels: YEARS,
@@ -44,7 +44,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       {
         label: 'Total Bids',
         data: stats.map(s => s.totalBids),
-        backgroundColor: 'rgba(59,111,232,0.5)',
+        backgroundColor: 'rgba(249,115,22,0.5)',
         borderColor: CHART_COLORS.accent,
         borderWidth: 1, borderRadius: 3,
       },

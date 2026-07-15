@@ -47,7 +47,7 @@ export default function Clients({ bids }) {
     labels: clientsByCount.map(c => c.name.length > 18 ? c.name.slice(0, 18) + '...' : c.name),
     datasets: [{
       data: clientsByCount.map(c => c.count),
-      backgroundColor: 'rgba(59,111,232,0.55)',
+      backgroundColor: 'rgba(249,115,22,0.55)',
       borderColor: CHART_COLORS.accent,
       borderWidth: 1, borderRadius: 3,
     }],
