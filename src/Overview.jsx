@@ -25,8 +25,12 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
   const monthly = useMonthlyData(typedBids, yearFilter);
   const { placements } = usePlacements();
 
-  // Filter placements to bids currently in view (respects year + type filter)
-  const visibleBidIds = useMemo(() => new Set(typedBids.map(b => b.id)), [typedBids]);
+  // Filter placements to bids currently in view (respects BOTH year + type filter, matching useBidStats)
+  const yearFilteredBids = useMemo(
+    () => yearFilter === 'all' ? typedBids : typedBids.filter(b => b.year === yearFilter),
+    [typedBids, yearFilter]
+  );
+  const visibleBidIds = useMemo(() => new Set(yearFilteredBids.map(b => b.id)), [yearFilteredBids]);
   const visiblePlacements = useMemo(() => placements.filter(p => visibleBidIds.has(p.bid_id)), [placements, visibleBidIds]);
   const placeStats = useMemo(() => placementStats(visiblePlacements), [visiblePlacements]);
 
