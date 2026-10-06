@@ -6,11 +6,11 @@ import { fmt$ } from './utils.js';
 import { fmtDate } from './dates.js';
 import { initialsOf } from './clientStats.js';
 
-const TILE = 104;            // px, tiles are squares
+const TILE = 208;            // px, tiles are squares
 const GAP = 16;              // px between tiles
-const SPEED = 40;            // px per second, slow enough to read a logo as it passes
+const SPEED = 30;            // px per second, slow enough to read a logo as it passes
 const MIN_ANIMATED = 4;      // fewer logos than this: just show them still
-const MIN_PER_HALF = 16;     // repeat the logos until each half of the loop is at least this many tiles wide
+const MIN_HALF_PX = 2800;    // each half of the loop must be at least this wide, so even a very wide screen never shows a gap
 
 /* ── details card shown while a logo is hovered or focused ─────────────────── */
 
@@ -74,7 +74,7 @@ function Tile({ item, duplicate, onOpen, onHover }) {
       onBlur={() => onHover(null)}
     >
       {broken ? (
-        <span aria-hidden="true" className="flex h-full w-full items-center justify-center text-[28px] font-semibold text-[#8a8580]">{initialsOf(item.name)}</span>
+        <span aria-hidden="true" className="flex h-full w-full items-center justify-center text-[48px] font-semibold text-[#8a8580]">{initialsOf(item.name)}</span>
       ) : (
         <img src={item.logo} alt="" loading="lazy" draggable={false} onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" />
       )}
@@ -89,7 +89,7 @@ export default function LogoShowcase({ items, onOpen }) {
   const [hover, setHover] = useState(null);     // { item, el }
 
   const animated = items.length >= MIN_ANIMATED;
-  const reps = animated ? Math.ceil(MIN_PER_HALF / items.length) : 1;
+  const reps = animated ? Math.ceil(MIN_HALF_PX / (items.length * (TILE + GAP))) : 1;
   const half = useMemo(() => Array.from({ length: reps }, () => items).flat(), [items, reps]);
   const seconds = Math.round((half.length * (TILE + GAP)) / SPEED);   // one loop = one half-width, at a constant speed
 
