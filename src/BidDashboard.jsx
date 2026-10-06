@@ -53,48 +53,15 @@ function useNow(ms = 30000) {
   return now;
 }
 
-/* ── signature touch: faint topographic contour lines ─────────────────────── */
-
-// Closed, gently wobbling rings, like the contours on a grading plan. Every 4th ring is an "index contour".
-function contourPaths(seed) {
-  const rings = [];
-  for (let i = 1; i <= 11; i++) {
-    const R = i * 19;
-    const pts = [];
-    for (let k = 0; k < 90; k++) {
-      const t = (k / 90) * Math.PI * 2;
-      const wobble = 1 + 0.10 * Math.sin(3 * t + seed + i * 0.18) + 0.06 * Math.sin(5 * t + seed * 1.7 - i * 0.25) + 0.03 * Math.sin(9 * t + seed * 2.3 + i * 0.4);
-      pts.push(`${(250 + R * wobble * Math.cos(t)).toFixed(1)},${(130 + R * wobble * Math.sin(t) * 0.78).toFixed(1)}`);
-    }
-    rings.push({ d: `M${pts.join('L')}Z`, index: i % 4 === 0 });
-  }
-  return rings;
-}
-
-function ContourLines({ seed = 1, className }) {
-  const rings = useMemo(() => contourPaths(seed), [seed]);
-  return (
-    <svg
-      aria-hidden="true" viewBox="0 0 500 260" fill="none"
-      className={cn('pointer-events-none absolute text-[var(--text)] opacity-[0.07]', className)}
-    >
-      {rings.map((r, i) => (
-        <path key={i} d={r.d} stroke="currentColor" strokeWidth={r.index ? 1.4 : 0.8} />
-      ))}
-    </svg>
-  );
-}
-
 /* ── stat card ────────────────────────────────────────────────────────────── */
 
 const TONES = { accent: 'var(--accent)', gold: '#d99a06', danger: 'var(--lost)', violet: '#7c6cf0' };
 
-function StatCard({ label, value, sub, icon: Icon, series, tone = 'accent', seed }) {
+function StatCard({ label, value, sub, icon: Icon, series, tone = 'accent' }) {
   const color = TONES[tone];
   const hasSeries = series && series.some((n) => n > 0);
   return (
     <Card interactive className="flex flex-col justify-between">
-      <ContourLines seed={seed} className="-right-24 -top-14 w-[340px]" />
       <div className="relative p-5 pb-0">
         <Icon className="absolute right-5 top-5 size-[18px]" style={{ color }} strokeWidth={1.75} aria-hidden="true" />
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-subtle)]">{label}</div>
@@ -135,7 +102,6 @@ function NextDeadline({ bids, onOpen }) {
 
   return (
     <Card className="mb-4">
-      <ContourLines seed={0.6} className="-right-16 -top-20 w-[560px]" />
       <section aria-labelledby="next-deadline-label" className="relative flex flex-wrap items-end justify-between gap-x-8 gap-y-3 px-6 py-5">
         <div className="min-w-0 flex-1">
           <div id="next-deadline-label" className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-subtle)]">
@@ -340,10 +306,10 @@ export default function BidDashboard({ bids: initialBids }) {
       <NextDeadline bids={upcomingBids} onOpen={setModalBid} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Upcoming Bids" value={upcomingBids.length} sub={`${bidsWeekly[0]} Due in the Next 7 Days`} icon={CalendarClock} series={bidsWeekly} tone="accent" seed={1} />
-        <StatCard label="High Priority" value={highPri} sub={`Of ${upcomingBids.length} Upcoming`} icon={Star} tone="gold" seed={2.4} />
-        <StatCard label="Past Due" value={pastDue} sub="Awaiting a Status Update" icon={TriangleAlert} tone="danger" seed={3.7} />
-        <StatCard label="Upcoming Pre-Bids" value={upcomingPreBids.length} sub={`${preBidsWeekly[0]} in the Next 7 Days`} icon={UsersRound} series={preBidsWeekly} tone="violet" seed={5.1} />
+        <StatCard label="Upcoming Bids" value={upcomingBids.length} sub={`${bidsWeekly[0]} Due in the Next 7 Days`} icon={CalendarClock} series={bidsWeekly} tone="accent" />
+        <StatCard label="High Priority" value={highPri} sub={`Of ${upcomingBids.length} Upcoming`} icon={Star} tone="gold" />
+        <StatCard label="Past Due" value={pastDue} sub="Awaiting a Status Update" icon={TriangleAlert} tone="danger" />
+        <StatCard label="Upcoming Pre-Bids" value={upcomingPreBids.length} sub={`${preBidsWeekly[0]} in the Next 7 Days`} icon={UsersRound} series={preBidsWeekly} tone="violet" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: 16, alignItems: 'start' }} className="dashboard-grid">

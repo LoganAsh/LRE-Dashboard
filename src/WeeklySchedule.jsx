@@ -389,7 +389,7 @@ function PlanCard({ plan, project, sovCategories, allCrew, allEquipment, allProj
   const pct = totalItems > 0 ? Math.round(doneItems/totalItems*100) : 0;
 
   return (
-    <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+    <div className="contour" style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
       <div style={{padding:'12px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={()=>setExpanded(v=>!v)}>
         <span style={{fontSize:14,color:'var(--muted)',transition:'transform 0.2s',transform:expanded?'rotate(90deg)':'none'}}>▶</span>
         <div style={{flex:1,minWidth:0}}>
@@ -599,7 +599,7 @@ export default function WeeklySchedule() {
       ) : (
         <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:20,alignItems:'start'}}>
           {/* Project list sidebar */}
-          <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',position:'sticky',top:70}}>
+          <div className="contour" style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',position:'sticky',top:70}}>
             <div style={{padding:'10px 14px',borderBottom:'1px solid var(--border)',fontSize:10,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600}}>Projects</div>
             {activeProjects.map(p=>(
               <button key={p.id} onClick={()=>setSelectedProject(p)} style={{

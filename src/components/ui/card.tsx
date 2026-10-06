@@ -27,7 +27,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div data-wensity-primitive=""
         ref={ref}
         className={cn(
-          "group relative overflow-hidden rounded-[var(--primitive-radius-surface,1rem)] border",
+          "contour group relative overflow-hidden rounded-[var(--primitive-radius-surface,1rem)] border",
           "border-[var(--border)] bg-[color:var(--primitive-surface-elevated,var(--card))] text-[var(--foreground)]",
           "[box-shadow:var(--primitive-shadow-raised,0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_-12px_rgba(0,0,0,0.12))]",
           interactive && [

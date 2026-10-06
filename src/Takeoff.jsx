@@ -354,7 +354,7 @@ export default function Takeoff() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Footing inputs */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Footing Dimensions" color="#7a8298" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
               <NumField label="Length" value={footing.length} onChange={v => setF('length', v)} suffix="ft" />
@@ -394,7 +394,7 @@ export default function Takeoff() {
           </div>
 
           {/* Wall inputs */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Wall Dimensions" color="#f97316" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
               <NumField label="Length" value={wall.length} onChange={v => setW('length', v)} suffix="ft" />
@@ -434,7 +434,7 @@ export default function Takeoff() {
           </div>
 
           {/* Waste factor */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Label>Concrete Waste Factor</Label>
             <div style={{ position: 'relative' }}>
               <input type="number" step="0.5" value={wasteFactor} onChange={e => setWasteFactor(e.target.value)} style={field} />
@@ -445,13 +445,13 @@ export default function Takeoff() {
 
         {/* ── Visual + Results Panel ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Cross-Section View</div>
             <CrossSectionView footing={footing} wall={wall} calc={results} />
           </div>
 
           {/* Concrete Volume */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Concrete Volume" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10 }}>
               <StatBox label="Footing" value={`${fmtNum(results.footingCY)} CY`} />
@@ -461,7 +461,7 @@ export default function Takeoff() {
           </div>
 
           {/* Footing Rebar Results */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Footing Rebar" color="#e8c547" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10, marginBottom: 10 }}>
               <StatBox label="Longitudinal Bars" value={`${results.fLongCount} × ${results.fLongRows} row(s)`} sub={`${footing.longBarSize} · ${fmtNum(results.fLongLF)} LF`} />
@@ -472,7 +472,7 @@ export default function Takeoff() {
           </div>
 
           {/* Wall Rebar Results */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Wall Rebar" color="#2ebd7e" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10, marginBottom: 10 }}>
               <StatBox label="Vertical Bars" value={`${results.vertCount} × ${results.vertRows} row(s)`} sub={`${wall.vertBarSize} · ${fmtNum(results.wVertLF)} LF (Incl. Embed.)`} />
@@ -483,7 +483,7 @@ export default function Takeoff() {
           </div>
 
           {/* Material List by Bar Size */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+          <div className="contour" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Rebar Material List" />
             {results.materialList.length === 0 ? (
               <div style={{ color: 'var(--muted)', fontSize: 12, padding: '8px 0' }}>Enter dimensions and rebar spacing to generate a material list.</div>

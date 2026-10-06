@@ -1,304 +1,117 @@
-import { useState, useMemo, useEffect } from 'react';
-import { supabase } from './supabase.js';
-import { parseClients, usePlacements, placementStats } from './hooks.js';
-import { fmt$, fmtFull$ } from './utils.js';
-import { StatusModal } from './StatusModal.jsx';
+import { useEffect, useMemo, useState } from 'react';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { fmt$ } from './utils.js';
+import { fmtDate } from './dates.js';
+import { buildClientRows, sortClientRows, clientKey } from './clientStats.js';
+import { useClientLogos } from './clientLogos.js';
+import ClientLogo from './ClientLogo.jsx';
+import ClientDetail from './ClientDetail.jsx';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function getAllClientNames(bids) {
-  const set = new Set();
-  bids.forEach(b => {
-    const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
-    names.forEach(n => { if (n.trim()) set.add(n.trim()); });
-  });
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
-}
+const green = 'text-[#15803d] dark:text-[#4ade80]';
 
-function bidsForClient(bids, clientName) {
-  return bids.filter(b => {
-    const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
-    return names.some(n => n.trim().toLowerCase() === clientName.toLowerCase());
-  });
-}
-
-// ── Client Detail Panel ───────────────────────────────────────────────────────
-function ClientDetail({ clientName, bids, onClose }) {
-  const [projects, setProjects] = useState([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
-  const [localBids, setLocalBids] = useState(bids);
-  const [modalBid, setModalBid] = useState(null);
-
-  useEffect(() => { setLocalBids(bids); }, [bids]);
-
-  const handleBidSave = (updated) => {
-    setLocalBids(prev => prev.map(b => b.id === updated.id ? updated : b));
-  };
-
-  useEffect(() => {
-    setLoadingProjects(true);
-    supabase.from('lre_projects').select('*').then(({ data }) => {
-      const matched = (data || []).filter(p => {
-        const clientMatch = (p.client || '').toLowerCase().includes(clientName.toLowerCase());
-        const awardedMatch = (p.awarded_by || '').toLowerCase() === clientName.toLowerCase();
-        return clientMatch || awardedMatch;
-      });
-      setProjects(matched);
-      setLoadingProjects(false);
-    });
-  }, [clientName]);
-
-  const clientBids = useMemo(() => bidsForClient(localBids, clientName).filter(b => b.bid_amount > 0), [localBids, clientName]);
-
-  const stats = useMemo(() => {
-    const won = clientBids.filter(b => (b.effective_status || b.status) === 'Won');
-    const lost = clientBids.filter(b => (b.effective_status || b.status) === 'Lost');
-    const pending = clientBids.filter(b => ['Pending', 'Upcoming'].includes(b.effective_status || b.status));
-    const totalVolume = clientBids.reduce((s, b) => s + (b.bid_amount || 0), 0);
-    // Only credit awarded volume to THIS client if awarded_by matches (or is unset and this is the only bidder)
-    const awardedVolume = won.reduce((s, b) => {
-      if (b.awarded_by) {
-        return b.awarded_by.trim().toLowerCase() === clientName.toLowerCase() ? s + (b.award_amount || b.bid_amount || 0) : s;
-      }
-      const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
-      return names.length === 1 ? s + (b.award_amount || b.bid_amount || 0) : s;
-    }, 0);
-    const winRate = clientBids.length ? (won.length / clientBids.length * 100) : 0;
-    const margins = clientBids.filter(b => b.margin_pct > 0).map(b => b.margin_pct * 100);
-    const avgMargin = margins.length ? margins.reduce((a, v) => a + v, 0) / margins.length : 0;
-    return { won, lost, pending, totalVolume, awardedVolume, winRate, avgMargin };
-  }, [clientBids, clientName]);
-
-  const { placements } = usePlacements();
-  const clientPlaceStats = useMemo(() => placementStats(placements, clientName), [placements, clientName]);
-
-  const projectStats = useMemo(() => {
-    const totalContract = projects.reduce((s, p) => s + (p.original_contract || 0) + (p.approved_cos || 0), 0);
-    const totalActual = projects.reduce((s, p) => s + (p.actual_cost || 0), 0);
-    const active = projects.filter(p => ['Mobilizing', 'Active', 'Punch List'].includes(p.status));
-    const complete = projects.filter(p => p.status === 'Complete');
-    return { totalContract, totalActual, active, complete };
-  }, [projects]);
-
-  const sortedBids = useMemo(() => [...clientBids].sort((a, b) => (b.bid_date || '').localeCompare(a.bid_date || '')), [clientBids]);
-
-  const STATUS_PILL = {
-    'Won': { bg: 'rgba(46,189,126,0.15)', color: 'var(--won)' },
-    'Lost': { bg: 'rgba(232,92,80,0.15)', color: 'var(--lost)' },
-    'Pending': { bg: 'var(--accent-light)', color: 'var(--accent)' },
-    'Upcoming': { bg: 'rgba(167,139,250,0.15)', color: '#a78bfa' },
-    'No Bid': { bg: 'rgba(58,63,82,0.3)', color: 'var(--muted)' },
-    'Client Not Awarded': { bg: 'rgba(249,115,22,0.15)', color: '#f97316' },
-    'Project Re-Bid': { bg: 'rgba(232,197,71,0.15)', color: '#e8c547' },
-  };
-
-  const PROJECT_STATUS_COLORS = {
-    'Not Started': '#7a8298', 'Mobilizing': '#e8c547', 'Active': '#f97316',
-    'Punch List': '#f97316', 'Complete': '#2ebd7e',
-  };
-
+function MiniStat({ label, value }) {
   return (
-    <>
-    {modalBid && <StatusModal bid={modalBid} onClose={() => setModalBid(null)} onSave={handleBidSave} />}
-    <div onClick={e => e.target === e.currentTarget && onClose()} style={{
-      position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }}>
-      <div className="modal-inner" style={{
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10,
-        width: '100%', maxWidth: 760, maxHeight: '90vh', overflowY: 'auto',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
-      }}>
-        {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>{clientName}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
-        </div>
-
-        <div style={{ padding: 20 }}>
-          {/* Summary stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 10, marginBottom: 20 }}>
-            {[
-              ['Total Bids', clientBids.length, 'var(--text)'],
-              ['Win Rate', `${stats.winRate.toFixed(0)}%`, 'var(--accent)'],
-              ['Won', stats.won.length, 'var(--won)'],
-              ['Lost', stats.lost.length, 'var(--lost)'],
-              ['Pending', stats.pending.length, '#a78bfa'],
-              ['Avg Margin', `${stats.avgMargin.toFixed(1)}%`, 'var(--text)'],
-            ].map(([label, val, color]) => (
-              <div key={label} style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color }}>{val}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '12px 14px' }}>
-              <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Total Bid Volume</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>{fmt$(stats.totalVolume)}</div>
-            </div>
-            <div style={{ background: 'rgba(46,189,126,0.08)', border: '1px solid rgba(46,189,126,0.2)', borderRadius: 6, padding: '12px 14px' }}>
-              <div style={{ fontSize: 9, color: 'var(--won)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Awarded Volume</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--won)' }}>{fmt$(stats.awardedVolume)}</div>
-            </div>
-          </div>
-
-          {clientPlaceStats.count > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
-              <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Avg % High/Low</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: clientPlaceStats.avgPctHighLow !== null && clientPlaceStats.avgPctHighLow < 0 ? 'var(--won)' : 'var(--text)' }}>
-                  {clientPlaceStats.avgPctHighLow !== null ? `${clientPlaceStats.avgPctHighLow > 0 ? '+' : ''}${clientPlaceStats.avgPctHighLow.toFixed(1)}%` : '—'}
-                </div>
-              </div>
-              <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Avg Place</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{clientPlaceStats.avgPlace !== null ? clientPlaceStats.avgPlace.toFixed(1) : '—'}</div>
-              </div>
-              <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>1st Place Finishes</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--won)' }}>{clientPlaceStats.firstPlaceCount} / {clientPlaceStats.withPlace.length}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Projects section */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>
-              Projects {projects.length > 0 && `(${projects.length})`}
-            </div>
-            {loadingProjects ? (
-              <div style={{ color: 'var(--muted)', fontSize: 12 }}>Loading…</div>
-            ) : projects.length === 0 ? (
-              <div style={{ color: 'var(--muted)', fontSize: 12 }}>No projects tracked for this client yet.</div>
-            ) : (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
-                  <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                    <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Active Projects</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--accent)' }}>{projectStats.active.length}</div>
-                  </div>
-                  <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                    <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Total Contract</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{fmt$(projectStats.totalContract)}</div>
-                  </div>
-                  <div style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px' }}>
-                    <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Total Actual Cost</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{fmt$(projectStats.totalActual)}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {projects.map(p => (
-                    <div key={p.id} style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>{fmtFull$((p.original_contract || 0) + (p.approved_cos || 0))} Revised Contract</div>
-                      </div>
-                      <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: (PROJECT_STATUS_COLORS[p.status] || '#7a8298') + '22', color: PROJECT_STATUS_COLORS[p.status] || '#7a8298', whiteSpace: 'nowrap' }}>{p.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Bid history */}
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>
-              Bid History ({sortedBids.length})
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 320, overflowY: 'auto' }}>
-              {sortedBids.map((b, i) => {
-                const eff = b.effective_status || b.status;
-                // If bid was Won but awarded to a *different* client than this one, show "Not Awarded" for this client's context
-                const namesOnBid = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
-                const wonByOther = eff === 'Won' && b.awarded_by && b.awarded_by.trim().toLowerCase() !== clientName.toLowerCase() && namesOnBid.length > 1;
-                const displayStatus = wonByOther ? 'Not Awarded' : eff;
-                const pill = wonByOther ? { bg: 'rgba(58,63,82,0.3)', color: 'var(--muted)' } : (STATUS_PILL[eff] || STATUS_PILL['Pending']);
-                const showAwarded = eff === 'Won' && !wonByOther && b.award_amount > 0;
-                const displayAmount = showAwarded ? b.award_amount : b.bid_amount;
-                const bidPlacement = placements.find(p => p.bid_id === b.id && p.client_name.trim().toLowerCase() === clientName.toLowerCase());
-                return (
-                  <button key={b.id ?? i} onClick={() => setModalBid(b)} style={{
-                    background: 'var(--surface2)', borderRadius: 6, padding: '8px 12px',
-                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                    border: '1px solid transparent', cursor: 'pointer', textAlign: 'left',
-                    fontFamily: 'inherit', color: 'inherit', transition: 'border-color 0.15s',
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-                    onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
-                  >
-                    <span style={{ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>{b.bid_date}</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</span>
-                    {bidPlacement && bidPlacement.place && (
-                      <span style={{ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>#{bidPlacement.place}</span>
-                    )}
-                    {bidPlacement && bidPlacement.pct_high_low !== null && bidPlacement.pct_high_low !== undefined && (
-                      <span style={{ fontSize: 10, color: Number(bidPlacement.pct_high_low) < 0 ? 'var(--won)' : 'var(--lost)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {Number(bidPlacement.pct_high_low) > 0 ? '+' : ''}{Number(bidPlacement.pct_high_low).toFixed(1)}%
-                      </span>
-                    )}
-                    <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: showAwarded ? 'var(--won)' : 'var(--muted)', fontWeight: showAwarded ? 600 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtFull$(displayAmount)}</span>
-                    <span style={{ padding: '2px 7px', borderRadius: 3, fontSize: 10, fontWeight: 600, background: pill.bg, color: pill.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{displayStatus}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-w-0 border-l border-[color:var(--border)] pl-3 first:border-l-0 first:pl-0">
+      <dt className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[var(--text-subtle)]">{label}</dt>
+      <dd className="mt-0.5 text-[15px] font-semibold tabular-nums">{value}</dd>
     </div>
-    </>
   );
 }
 
-// ── Main Client Directory ─────────────────────────────────────────────────────
-export default function ClientDirectory({ bids }) {
+function ClientCard({ row, isTop, logo, busy, onOpen, onPick }) {
+  const { name } = row;
+  return (
+    <article
+      data-client={name}
+      data-bids={row.bidCount}
+      data-won={row.wonCount}
+      data-winrate={row.winRate.toFixed(0)}
+      data-last={row.lastBidDate}
+      data-volume={fmt$(row.totalVolume)}
+      data-awarded={row.awardedVolume > 0 ? fmt$(row.awardedVolume) : ''}
+      onClick={() => onOpen(name)}
+      className={cn(
+        'contour flex cursor-pointer flex-col gap-5 rounded-[14px] border border-[color:var(--border)] bg-[var(--card)] p-5',
+        'transition-colors hover:border-[color-mix(in_srgb,var(--text)_22%,transparent)]'
+      )}
+    >
+      <div className="flex items-start gap-3.5">
+        <ClientLogo name={name} logo={logo} busy={busy} onPick={onPick} size={52} />
+        <div className="min-w-0 flex-1 pt-0.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button" data-client-open aria-haspopup="dialog" title={name}
+              onClick={(e) => { e.stopPropagation(); onOpen(name); }}
+              className="min-w-0 appearance-none truncate border-0 bg-transparent p-0 text-left text-[15px] font-semibold text-[var(--text)] [font-family:inherit] outline-none cursor-pointer hover:text-[#c2540a] focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:hover:text-[#fb923c]"
+            >
+              {name}
+            </button>
+            {isTop && <span className="size-1.5 shrink-0 rounded-full bg-[var(--won)]" title="Top 10 client by bid volume" aria-label="Top 10 client by bid volume" />}
+          </div>
+          <div className="mt-0.5 truncate text-xs text-[var(--text-subtle)]">
+            {row.lastBidDate ? `Last Bid ${fmtDate(row.lastBidDate)}` : 'No Bids Yet'}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[var(--text-subtle)]">Total Bid Volume</div>
+        <div className="mt-1 text-[26px] font-semibold leading-none tracking-tight tabular-nums">{fmt$(row.totalVolume)}</div>
+        <div className={cn('mt-1.5 text-xs', row.awardedVolume > 0 ? cn('font-medium', green) : 'text-[var(--text-subtle)]')}>
+          {row.awardedVolume > 0 ? `${fmt$(row.awardedVolume)} Awarded` : 'No Awards Yet'}
+        </div>
+      </div>
+
+      <dl className="mt-auto grid grid-cols-3 border-t border-[color:var(--border)] pt-3">
+        <MiniStat label="Bids" value={row.bidCount} />
+        <MiniStat label="Won" value={row.wonCount} />
+        <MiniStat label="Win Rate" value={`${row.winRate.toFixed(0)}%`} />
+      </dl>
+    </article>
+  );
+}
+
+export default function ClientDirectory({ bids: initialBids }) {
+  const [bids, setBids] = useState(initialBids);
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState('volume');
   const [selectedClient, setSelectedClient] = useState(null);
+  const { logos, busyKey, error, clearError, upload, remove } = useClientLogos();
 
-  const clientNames = useMemo(() => getAllClientNames(bids), [bids]);
+  useEffect(() => { setBids(initialBids); }, [initialBids]);
 
-  const clientRows = useMemo(() => {
-    return clientNames.map(name => {
-      const clientBids = bidsForClient(bids, name).filter(b => b.bid_amount > 0);
-      const won = clientBids.filter(b => (b.effective_status || b.status) === 'Won');
-      const totalVolume = clientBids.reduce((s, b) => s + (b.bid_amount || 0), 0);
-      const awardedVolume = won.reduce((s, b) => {
-        if (b.awarded_by) {
-          return b.awarded_by.trim().toLowerCase() === name.toLowerCase() ? s + (b.award_amount || b.bid_amount || 0) : s;
-        }
-        const names = (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
-        return names.length === 1 ? s + (b.award_amount || b.bid_amount || 0) : s;
-      }, 0);
-      const winRate = clientBids.length ? (won.length / clientBids.length * 100) : 0;
-      const lastBidDate = clientBids.reduce((max, b) => (b.bid_date || '') > max ? b.bid_date : max, '');
-      return { name, bidCount: clientBids.length, wonCount: won.length, totalVolume, awardedVolume, winRate, lastBidDate };
-    }).filter(c => c.bidCount > 0);
-  }, [bids, clientNames]);
+  const handleBidSave = (updated) => setBids((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+
+  const rows = useMemo(() => buildClientRows(bids), [bids]);
+  const topClients = useMemo(
+    () => new Set([...rows].sort((a, b) => b.totalVolume - a.totalVolume).slice(0, 10).map((r) => r.name)),
+    [rows]
+  );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return clientRows
-      .filter(c => !q || c.name.toLowerCase().includes(q))
-      .sort((a, b) => {
-        if (sortKey === 'volume') return b.totalVolume - a.totalVolume;
-        if (sortKey === 'awarded') return b.awardedVolume - a.awardedVolume;
-        if (sortKey === 'count') return b.bidCount - a.bidCount;
-        if (sortKey === 'winrate') return b.winRate - a.winRate;
-        if (sortKey === 'recent') return (b.lastBidDate || '').localeCompare(a.lastBidDate || '');
-        return 0;
-      });
-  }, [clientRows, search, sortKey]);
+    return sortClientRows(rows.filter((c) => !q || c.name.toLowerCase().includes(q)), sortKey);
+  }, [rows, search, sortKey]);
 
   return (
     <div className="page">
-      {selectedClient && <ClientDetail clientName={selectedClient} bids={bids} onClose={() => setSelectedClient(null)} />}
+      {selectedClient && (
+        <ClientDetail
+          clientName={selectedClient}
+          bids={bids}
+          onBidSave={handleBidSave}
+          logo={logos[clientKey(selectedClient)]?.url}
+          busy={busyKey === clientKey(selectedClient)}
+          onUpload={(file) => upload(selectedClient, file)}
+          onRemove={() => remove(selectedClient)}
+          onClose={() => setSelectedClient(null)}
+        />
+      )}
 
       <div className="table-controls" style={{ marginBottom: 16 }}>
-        <input className="search-input" type="text" placeholder="Search clients…" value={search} onChange={e => setSearch(e.target.value)} />
-        <select className="select-filter" value={sortKey} onChange={e => setSortKey(e.target.value)}>
+        <input className="search-input" type="text" placeholder="Search clients…" aria-label="Search clients" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select className="select-filter" aria-label="Sort clients" value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
           <option value="volume">Sort: Total Volume</option>
           <option value="awarded">Sort: Awarded Volume</option>
           <option value="count">Sort: Bid Count</option>
@@ -308,33 +121,36 @@ export default function ClientDirectory({ bids }) {
         <span className="table-count">{filtered.length} Clients</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {filtered.map(c => (
-          <button key={c.name} onClick={() => setSelectedClient(c.name)} style={{
-            display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px',
-            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8,
-            cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color 0.15s',
-            fontFamily: 'inherit', color: 'inherit',
-          }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-                {c.bidCount} Bids · {c.wonCount} Won · {c.winRate.toFixed(0)}% Win Rate
-                {c.lastBidDate && <span> · Last Bid {c.lastBidDate}</span>}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{fmt$(c.totalVolume)}</div>
-              {c.awardedVolume > 0 && <div style={{ fontSize: 11, color: 'var(--won)' }}>{fmt$(c.awardedVolume)} Awarded</div>}
-            </div>
+      {error && (
+        <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-lg border border-[color:var(--lost)] px-3.5 py-2.5 text-[13px] text-[#b91c1c] dark:text-[#f87171]">
+          <span>{error}</span>
+          <button type="button" onClick={clearError} aria-label="Dismiss message" className="mt-0.5 shrink-0 appearance-none border-0 bg-transparent p-0 text-inherit cursor-pointer">
+            <X className="size-4" strokeWidth={1.75} aria-hidden="true" />
           </button>
-        ))}
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>No clients found.</div>
-        )}
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <div className="py-12 text-center text-[13px] text-[var(--text-subtle)]">No clients found.</div>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-4">
+          {filtered.map((row) => (
+            <ClientCard
+              key={row.name}
+              row={row}
+              isTop={topClients.has(row.name)}
+              logo={logos[clientKey(row.name)]?.url}
+              busy={busyKey === clientKey(row.name)}
+              onOpen={setSelectedClient}
+              onPick={(file) => upload(row.name, file)}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="mt-5 flex items-center gap-1.5 text-xs text-[var(--text-subtle)]">
+        <span className="size-1.5 rounded-full bg-[var(--won)]" aria-hidden="true" />Top 10 Client by Volume
+        <span className="mx-1.5" aria-hidden="true">·</span>Hover a logo to upload or change it
       </div>
     </div>
   );

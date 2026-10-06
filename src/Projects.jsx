@@ -314,7 +314,7 @@ function ProjectCard({ project, wonBids, onEdit, onDeleted }) {
   return (
     <>
       {showSov && <SovEditor projectId={project.id} originalContract={revised} onClose={() => setShowSov(false)} />}
-      <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden' }}>
+      <div className="contour" style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden' }}>
         {/* Header */}
         <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:10 }}>
           <div style={{ flex:1, minWidth:0 }}>
