@@ -7,6 +7,7 @@ import { buildClientRows, sortClientRows, clientKey } from './clientStats.js';
 import { useClientLogos } from './clientLogos.js';
 import ClientLogo from './ClientLogo.jsx';
 import ClientDetail from './ClientDetail.jsx';
+import LogoShowcase from './LogoShowcase.jsx';
 
 const green = 'text-[#15803d] dark:text-[#4ade80]';
 
@@ -91,6 +92,15 @@ export default function ClientDirectory({ bids: initialBids }) {
     [rows]
   );
 
+  // Clients that have a logo, biggest first. Independent of the search box and sort order below.
+  const showcase = useMemo(
+    () => rows
+      .filter((r) => logos[clientKey(r.name)]?.url)
+      .sort((a, b) => b.totalVolume - a.totalVolume)
+      .map((r) => ({ ...r, logo: logos[clientKey(r.name)].url })),
+    [rows, logos]
+  );
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return sortClientRows(rows.filter((c) => !q || c.name.toLowerCase().includes(q)), sortKey);
@@ -110,6 +120,8 @@ export default function ClientDirectory({ bids: initialBids }) {
           onClose={() => setSelectedClient(null)}
         />
       )}
+
+      <LogoShowcase items={showcase} onOpen={setSelectedClient} />
 
       <div className="table-controls" style={{ marginBottom: 16 }}>
         <input className="search-input" type="text" placeholder="Search clients…" aria-label="Search clients" value={search} onChange={(e) => setSearch(e.target.value)} />
