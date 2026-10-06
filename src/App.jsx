@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, ChartColumn, TrendingUp, Users, ChartPie,
-  ListChecks, FolderKanban, CalendarDays, Ruler,
+  ListChecks, FolderKanban, CalendarDays, CalendarRange, Ruler,
 } from 'lucide-react';
 import { LOGO_B64 } from './logo.js';
 import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
 import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './components/ui/sidebar';
 import BidDashboard from './BidDashboard.jsx';
+import BidCalendar from './BidCalendar.jsx';
 import Projects from './Projects.jsx';
 import WeeklySchedule from './WeeklySchedule.jsx';
 import Takeoff from './Takeoff.jsx';
@@ -22,6 +23,7 @@ const NAV_SECTIONS = [
     label: 'Bidding',
     items: [
       { tab: 'Bid Dashboard', icon: LayoutDashboard },
+      { tab: 'Calendar', icon: CalendarRange },
       { tab: 'Overview', icon: ChartColumn },
       { tab: 'Trends', icon: TrendingUp },
       { tab: 'Clients', icon: Users },
@@ -187,6 +189,7 @@ export default function App() {
         ) : (
           <>
             {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}
+            {activeTab === 'Calendar' && <BidCalendar bids={bids} />}
             {activeTab === 'Projects' && <Projects bids={bids} />}
             {activeTab === 'Weekly Schedule' && <WeeklySchedule />}
             {activeTab === 'Takeoff' && <Takeoff />}

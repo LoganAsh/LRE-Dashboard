@@ -3,6 +3,7 @@ import { supabase } from './supabase.js';
 import { parseClients } from './hooks.js';
 import { IconCalendarEvent, IconStar, IconAlertTriangle, IconUsersGroup } from '@tabler/icons-react';
 import { Card, CardStatSparkline } from './components/ui/card';
+import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 
 function getDaysUntil(dateStr) {
   if (!dateStr) return null;
@@ -182,26 +183,8 @@ export default function BidDashboard({ bids: initialBids }) {
   const oneWeekAgo = new Date(today); oneWeekAgo.setDate(today.getDate() - 7);
   const todayStr = today.toISOString().split('T')[0];
 
-  const upcomingBids = useMemo(() =>
-    bids
-      .filter(b => {
-        const eff = b.effective_status || b.status;
-        if (eff !== 'Upcoming') return false;
-        if (!b.bid_date) return false;
-        return new Date(b.bid_date + 'T00:00:00') >= oneWeekAgo;
-      })
-      .sort((a, b) => {
-        if (a.high_priority && !b.high_priority) return -1;
-        if (!a.high_priority && b.high_priority) return 1;
-        return a.bid_date.localeCompare(b.bid_date);
-      }),
-  [bids]);
-
-  const upcomingPreBids = useMemo(() =>
-    bids
-      .filter(b => b.pre_bid && String(b.pre_bid) >= todayStr)
-      .sort((a, b) => String(a.pre_bid).localeCompare(String(b.pre_bid))),
-  [bids]);
+  const upcomingBids = useMemo(() => getUpcomingBids(bids), [bids]);
+  const upcomingPreBids = useMemo(() => getUpcomingPreBids(bids), [bids]);
 
   const notBiddingBids = useMemo(() =>
     bids
