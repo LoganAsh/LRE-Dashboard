@@ -46,7 +46,7 @@ export default function ClientLogo({ name, logo, busy = false, onPick, size = 48
             className={cn(
               'absolute inset-0 flex appearance-none items-center justify-center rounded-xl border-0 bg-[color-mix(in_srgb,var(--card)_82%,transparent)] text-[var(--text-secondary)]',
               'outline-none cursor-pointer transition-opacity duration-150 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#ea580c]',
-              busy ? 'opacity-100' : 'opacity-0 group-hover/logo:opacity-100 [@media(hover:none)]:opacity-100'
+              busy ? 'opacity-100' : cn('opacity-0 group-hover/logo:opacity-100', !showImage && '[@media(hover:none)]:opacity-100')   // on touch screens, only show it over empty (initials) tiles
             )}
           >
             {busy ? <LoaderCircle className="size-4 animate-spin" strokeWidth={1.75} aria-hidden="true" /> : <Camera className="size-4" strokeWidth={1.75} aria-hidden="true" />}
