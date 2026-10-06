@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { supabase } from './supabase.js';
 import { parseClients, usePlacements, placementStats } from './hooks.js';
 import { fmt$, fmtFull$ } from './utils.js';
-import { StatusModal } from './BidLog.jsx';
+import { StatusModal } from './StatusModal.jsx';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getAllClientNames(bids) {

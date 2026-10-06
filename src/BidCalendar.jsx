@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EventCalendar } from './components/ui/event-calendar';
-import { StatusModal } from './BidLog.jsx';
+import { StatusModal } from './StatusModal.jsx';
 import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 import { parseClients } from './hooks.js';
 import { fmtFull$ } from './utils.js';

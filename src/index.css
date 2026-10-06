@@ -56,6 +56,8 @@
 
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { color-scheme: light; }
+  [data-theme="dark"] { color-scheme: dark; }
   /* Form controls ignore the page font by default; make them match everything else. */
   button, input, select, textarea, optgroup { font-family: inherit; letter-spacing: inherit; }
 }
