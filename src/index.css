@@ -171,7 +171,7 @@ body {
 .select-filter:focus-visible { border-color: #ea580c; }
 .table-count { color: var(--muted); font-size: 12px; margin-left: auto; }
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
-table { width: 100%; border-collapse: collapse; min-width: 820px; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
 thead { position: sticky; top: 0; background: var(--surface); z-index: 1; }
 th {
   padding: 12px 16px; text-align: left; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
@@ -179,6 +179,8 @@ th {
   white-space: nowrap; font-family: var(--font-display); font-weight: 600;
 }
 th:hover { color: var(--text); }
+.th-btn { appearance: none; display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.th-btn:focus-visible { outline: 2px solid #ea580c; outline-offset: 3px; border-radius: 3px; }
 th.sorted { color: var(--accent-text); }
 td { padding: 11px 16px; border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent); vertical-align: middle; font-size: 13px; }
 tr:last-child td { border-bottom: none; }
@@ -248,6 +250,7 @@ tr:hover td { background: color-mix(in srgb, var(--text) 3%, transparent); }
   .table-controls { gap: 8px; }
   .search-input { width: 100%; }
   .table-count { display: none; }
+  table { min-width: 0; }
 }
 
 @media (max-width: 480px) {
