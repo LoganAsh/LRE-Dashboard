@@ -6,10 +6,7 @@ import {
 import { LOGO_B64 } from './logo.js';
 import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
-import {
-  Sidebar, SidebarHeader, SidebarNav, SidebarSection, SidebarItem,
-  SidebarFooter, SidebarToggle, useSidebar,
-} from './components/ui/sidebar';
+import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './components/ui/sidebar';
 import BidDashboard from './BidDashboard.jsx';
 import Projects from './Projects.jsx';
 import WeeklySchedule from './WeeklySchedule.jsx';
@@ -51,33 +48,43 @@ function CountBadge({ children }) {
 }
 
 function Brand() {
-  const { collapsed } = useSidebar();
-  return collapsed ? (
-    <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-[var(--primary)] text-[12px] font-bold text-white">LR</div>
+  const { open } = useSidebar();
+  return (
+    <div className="flex h-9 items-center pl-1">
+      {open ? (
+        <img src={LOGO_B64} alt="Lightning Ridge Excavation" className="h-7 w-auto" />
+      ) : (
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-[var(--primary)] text-[12px] font-bold text-white">LR</div>
+      )}
+    </div>
+  );
+}
+
+function GroupLabel({ children }) {
+  const { open } = useSidebar();
+  return open ? (
+    <div className="px-2 pb-1 pt-5 text-[10.5px] font-medium uppercase leading-none tracking-[0.08em] text-[var(--muted-foreground)]">{children}</div>
   ) : (
-    <img src={LOGO_B64} alt="Lightning Ridge Excavation" className="h-7 w-auto" />
+    <div className="mx-2 my-3 h-px bg-[var(--border)]" />
   );
 }
 
 function UserFooter() {
-  const { collapsed } = useSidebar();
   return (
-    <>
-      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11px] font-bold text-[var(--accent-text)]">LR</div>
-      {!collapsed && (
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[12.5px] font-medium leading-tight">Lightning Ridge</div>
-          <div className="truncate text-[11px] leading-tight text-[var(--muted-foreground)]">Excavation</div>
-        </div>
-      )}
-    </>
+    <SidebarLink
+      link={{
+        label: 'Lightning Ridge Excavation',
+        icon: (
+          <div className="flex size-5 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[9px] font-bold text-[var(--accent-text)]">LR</div>
+        ),
+      }}
+    />
   );
 }
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('Bid Dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('lre-theme') || 'light');
-  const [narrow] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -126,33 +133,32 @@ export default function App() {
     : null;
 
   return (
-    <div className="app-shell">
-      <div className="sticky top-0 z-20 h-screen shrink-0">
-        <Sidebar variant="collapsible" width={240} defaultCollapsed={narrow} aria-label="Main navigation">
-          <SidebarHeader>
-            <Brand />
-            <SidebarToggle className="ml-auto" />
-          </SidebarHeader>
-          <SidebarNav>
-            {NAV_SECTIONS.map(section => (
-              <SidebarSection key={section.label} label={section.label}>
-                {section.items.map(({ tab, icon: Icon }) => (
-                  <SidebarItem
-                    key={tab}
-                    icon={<Icon className="size-[18px]" stroke={1.75} />}
-                    active={activeTab === tab}
-                    onClick={() => setActiveTab(tab)}
-                    badge={tab === 'Bid Dashboard' && upcomingCount > 0 ? <CountBadge>{upcomingCount}</CountBadge> : undefined}
-                  >
-                    {tab}
-                  </SidebarItem>
-                ))}
-              </SidebarSection>
-            ))}
-          </SidebarNav>
-          <SidebarFooter>
+    <div className="app-shell flex-col md:flex-row">
+      <div className="sticky top-0 z-30 shrink-0 md:h-screen">
+        <Sidebar>
+          <SidebarBody
+            className="justify-between gap-6"
+            mobileHeader={<img src={LOGO_B64} alt="Lightning Ridge Excavation" className="h-7 w-auto" />}
+          >
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+              <Brand />
+              {NAV_SECTIONS.map(section => (
+                <div key={section.label} className="flex flex-col gap-1">
+                  <GroupLabel>{section.label}</GroupLabel>
+                  {section.items.map(({ tab, icon: Icon }) => (
+                    <SidebarLink
+                      key={tab}
+                      link={{ label: tab, icon: <Icon className="size-[18px]" stroke={1.75} /> }}
+                      active={activeTab === tab}
+                      onClick={() => setActiveTab(tab)}
+                      badge={tab === 'Bid Dashboard' && upcomingCount > 0 ? <CountBadge>{upcomingCount}</CountBadge> : undefined}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
             <UserFooter />
-          </SidebarFooter>
+          </SidebarBody>
         </Sidebar>
       </div>
 
