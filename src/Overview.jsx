@@ -5,17 +5,25 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { useBidStats, useMonthlyData, usePlacements, placementStats } from './hooks.js';
+import { Card, CardStatSparkline } from './components/ui/card';
 import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, filterByType } from './utils.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler);
 
-function KPI({ label, value, sub, accent }) {
+function KPI({ label, value, sub, accent, series }) {
+  const valueColor = accent === 'won' ? 'var(--won)' : accent === 'accent' ? 'var(--accent-text)' : 'var(--foreground)';
+  const hasSeries = series && series.length > 1;
   return (
-    <div className="kpi">
-      <div className="kpi-label">{label}</div>
-      <div className={`kpi-value ${accent || ''}`}>{value}</div>
-      {sub && <div className="kpi-sub">{sub}</div>}
-    </div>
+    <Card interactive className="flex flex-col justify-between">
+      <div className="p-5 pb-0">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--muted-foreground)]">{label}</div>
+        <div className="mt-2 text-[30px] font-extrabold leading-none tracking-tight tabular-nums" style={{ color: valueColor }}>{value}</div>
+        {sub && <div className="mt-2 text-xs text-[var(--muted-foreground)]">{sub}</div>}
+      </div>
+      <div className="mt-3 h-12 w-full" style={{ '--primitive-success': 'var(--accent)' }}>
+        {hasSeries && <CardStatSparkline data={series} trend="up" width={280} height={48} preserveAspectRatio="none" className="h-full w-full" />}
+      </div>
+    </Card>
   );
 }
 
@@ -139,7 +147,7 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
 
       {/* KPIs */}
       <div className="kpi-grid">
-        <KPI label="Total Bid Volume" value={fmt$(stats.totalVolume)} sub={`${stats.active.length} active bids`} accent="accent" />
+        <KPI label="Total Bid Volume" value={fmt$(stats.totalVolume)} sub={`${stats.active.length} active bids · monthly trend`} accent="accent" series={monthly.map(m => m.volume)} />
         <KPI label="Won Volume" value={fmt$(stats.wonVolume)} sub={`${stats.won.length} projects awarded`} accent="won" />
         <KPI label="Win Rate" value={`${stats.winRate.toFixed(0)}%`} sub={`${stats.lost.length} confirmed losses`} />
         <KPI label="Avg Margin" value={`${(stats.avgMargin * 100).toFixed(1)}%`} sub={`${fmt$(stats.totalMargin)} total margin $`} />

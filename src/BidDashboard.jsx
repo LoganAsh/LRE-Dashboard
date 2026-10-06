@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from './supabase.js';
 import { parseClients } from './hooks.js';
+import { IconCalendarEvent, IconStar, IconAlertTriangle, IconUsersGroup } from '@tabler/icons-react';
+import { Card, CardStatSparkline } from './components/ui/card';
 
 function getDaysUntil(dateStr) {
   if (!dateStr) return null;
@@ -36,13 +38,30 @@ function UrgencyBadge({ days }) {
   );
 }
 
-function StatCard({ label, value, color }) {
+const TONES = { accent: 'var(--accent)', gold: '#d99a06', danger: 'var(--lost)', violet: '#7c6cf0' };
+
+function StatCard({ label, value, sub, icon: Icon, series, tone = 'accent' }) {
+  const color = TONES[tone];
+  const hasSeries = series && series.some(n => n > 0);
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '14px 16px', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${color}, transparent)` }} />
-      <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{label}</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 28, color, lineHeight: 1 }}>{value}</div>
-    </div>
+    <Card interactive className="flex flex-col justify-between">
+      <div className="flex items-start justify-between p-5 pb-0">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--muted-foreground)]">{label}</div>
+          <div className="mt-2 text-[30px] font-extrabold leading-none tracking-tight tabular-nums">{value}</div>
+          {sub && <div className="mt-2 text-xs text-[var(--muted-foreground)]">{sub}</div>}
+        </div>
+        {Icon && (
+          <div className="flex size-9 items-center justify-center rounded-[10px]"
+               style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
+            <Icon className="size-[18px]" stroke={1.8} />
+          </div>
+        )}
+      </div>
+      <div className="mt-3 h-12 w-full" style={{ '--primitive-success': color }}>
+        {hasSeries && <CardStatSparkline data={series} trend="up" width={280} height={48} preserveAspectRatio="none" className="h-full w-full" />}
+      </div>
+    </Card>
   );
 }
 
@@ -206,14 +225,25 @@ export default function BidDashboard({ bids: initialBids }) {
     if (!error) setBids(prev => prev.map(b => b.id === bid.id ? { ...b, status_override: null, effective_status: b.status } : b));
   };
 
+  // Real series: how many bids / pre-bids land in each of the next 8 weeks
+  const weekly = (dates) => {
+    const arr = Array(8).fill(0);
+    dates.forEach(d => { const days = getDaysUntil(d); if (days !== null && days >= 0 && days < 56) arr[Math.floor(days / 7)]++; });
+    return arr;
+  };
+  const bidsWeekly = weekly(upcomingBids.map(b => b.bid_date));
+  const preBidsWeekly = weekly(upcomingPreBids.map(b => b.pre_bid));
+  const pastDue = upcomingBids.filter(b => getDaysUntil(b.bid_date) < 0).length;
+  const highPri = upcomingBids.filter(b => b.high_priority).length;
+
   return (
     <div className="page">
       {/* Summary strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 28 }}>
-        <StatCard label="Upcoming Bids"    value={upcomingBids.length}                                        color="var(--accent)" />
-        <StatCard label="High Priority"    value={upcomingBids.filter(b => b.high_priority).length}           color="#facc15" />
-        <StatCard label="Past Due"         value={upcomingBids.filter(b => getDaysUntil(b.bid_date) < 0).length} color="#e85c50" />
-        <StatCard label="Upcoming Pre-Bids" value={upcomingPreBids.length}                                    color="#a78bfa" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
+        <StatCard label="Upcoming Bids" value={upcomingBids.length} sub={`${bidsWeekly[0]} due in the next 7 days`} icon={IconCalendarEvent} series={bidsWeekly} tone="accent" />
+        <StatCard label="High Priority" value={highPri} sub={`of ${upcomingBids.length} upcoming`} icon={IconStar} tone="gold" />
+        <StatCard label="Past Due" value={pastDue} sub="awaiting a status update" icon={IconAlertTriangle} tone="danger" />
+        <StatCard label="Upcoming Pre-Bids" value={upcomingPreBids.length} sub={`${preBidsWeekly[0]} in the next 7 days`} icon={IconUsersGroup} series={preBidsWeekly} tone="violet" />
       </div>
 
       {/* Main two-column layout */}
