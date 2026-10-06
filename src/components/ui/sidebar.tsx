@@ -10,7 +10,7 @@
 
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { IconMenu2, IconX } from "@tabler/icons-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const RAIL_WIDTH = 60;
@@ -152,7 +152,7 @@ export const MobileSidebar = ({
           className="z-20 flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)]"
           onClick={() => setOpen(!open)}
         >
-          <IconMenu2 className="size-5" stroke={1.75} />
+          <Menu className="size-5" strokeWidth={1.5} />
         </button>
         <AnimatePresence>
           {open && (
@@ -172,7 +172,7 @@ export const MobileSidebar = ({
                 className="absolute right-6 top-6 z-50 flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)]"
                 onClick={() => setOpen(false)}
               >
-                <IconX className="size-5" stroke={1.75} />
+                <X className="size-5" strokeWidth={1.5} />
               </button>
               <MobileCloseContext.Provider value={() => setOpen(false)}>
                 {children}
@@ -203,10 +203,10 @@ export const SidebarLink = ({
   const showLabels = animate ? open : true;
 
   const classes = cn(
-    "group/sidebar flex w-full items-center justify-start gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors duration-150",
+    "group/sidebar flex h-8 w-full items-center justify-start gap-2.5 rounded-md px-2 text-left text-[13px] font-medium outline-none transition-colors duration-150",
     "focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
     active
-      ? "bg-[var(--accent-soft)] text-[var(--accent-text)]"
+      ? "bg-[color-mix(in_srgb,var(--foreground)_7.5%,transparent)] text-[var(--foreground)]"
       : "text-[var(--text-secondary)] hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] hover:text-[var(--foreground)]",
     className
   );
@@ -218,16 +218,13 @@ export const SidebarLink = ({
 
   const content = (
     <>
-      <span className="flex size-5 shrink-0 items-center justify-center">{link.icon}</span>
+      <span className={cn("flex size-5 shrink-0 items-center justify-center", active && "text-[#ea580c] dark:text-[#fb923c]")}>{link.icon}</span>
       <motion.span
         animate={{
           display: showLabels ? "inline-block" : "none",
           opacity: showLabels ? 1 : 0,
         }}
-        className={cn(
-          "inline-block whitespace-pre text-sm transition duration-150 group-hover/sidebar:translate-x-1",
-          active && "font-semibold"
-        )}
+        className="inline-block whitespace-pre text-[13px]"
       >
         {link.label}
       </motion.span>

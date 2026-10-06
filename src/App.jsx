@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  IconLayoutDashboard, IconChartBar, IconTrendingUp, IconUsers, IconChartDots,
-  IconListDetails, IconFolders, IconCalendarWeek, IconRuler2,
-} from '@tabler/icons-react';
+  LayoutDashboard, ChartColumn, TrendingUp, Users, ChartPie,
+  ListChecks, FolderKanban, CalendarDays, Ruler,
+} from 'lucide-react';
 import { LOGO_B64 } from './logo.js';
 import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
@@ -21,27 +21,27 @@ const NAV_SECTIONS = [
   {
     label: 'Bidding',
     items: [
-      { tab: 'Bid Dashboard', icon: IconLayoutDashboard },
-      { tab: 'Overview', icon: IconChartBar },
-      { tab: 'Trends', icon: IconTrendingUp },
-      { tab: 'Clients', icon: IconUsers },
-      { tab: 'Client Analytics', icon: IconChartDots },
-      { tab: 'Bid Log', icon: IconListDetails },
+      { tab: 'Bid Dashboard', icon: LayoutDashboard },
+      { tab: 'Overview', icon: ChartColumn },
+      { tab: 'Trends', icon: TrendingUp },
+      { tab: 'Clients', icon: Users },
+      { tab: 'Client Analytics', icon: ChartPie },
+      { tab: 'Bid Log', icon: ListChecks },
     ],
   },
   {
     label: 'Operations',
     items: [
-      { tab: 'Projects', icon: IconFolders },
-      { tab: 'Weekly Schedule', icon: IconCalendarWeek },
-      { tab: 'Takeoff', icon: IconRuler2 },
+      { tab: 'Projects', icon: FolderKanban },
+      { tab: 'Weekly Schedule', icon: CalendarDays },
+      { tab: 'Takeoff', icon: Ruler },
     ],
   },
 ];
 
 function CountBadge({ children }) {
   return (
-    <span className="rounded-md bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] px-1.5 py-0.5 text-[10.5px] font-medium leading-none tabular-nums text-[var(--muted-foreground)]">
+    <span className="rounded-md bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] px-1.5 py-[3px] text-[10.5px] font-semibold leading-none tabular-nums text-[var(--text-secondary)]">
       {children}
     </span>
   );
@@ -63,22 +63,24 @@ function Brand() {
 function GroupLabel({ children }) {
   const { open } = useSidebar();
   return open ? (
-    <div className="px-2 pb-1 pt-5 text-[10.5px] font-medium uppercase leading-none tracking-[0.08em] text-[var(--muted-foreground)]">{children}</div>
+    <div className="px-2.5 pb-1.5 pt-4 text-[10.5px] font-medium uppercase leading-none tracking-[0.08em] text-[#6f6a64] dark:text-[#a8a29e]">{children}</div>
   ) : (
     <div className="mx-2 my-3 h-px bg-[var(--border)]" />
   );
 }
 
 function UserFooter() {
+  const { open } = useSidebar();
   return (
-    <SidebarLink
-      link={{
-        label: 'Lightning Ridge Excavation',
-        icon: (
-          <div className="flex size-5 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[9px] font-bold text-[var(--accent-text)]">LR</div>
-        ),
-      }}
-    />
+    <div className={`flex items-center gap-2.5 border-t border-[var(--border)] pt-3 ${open ? '' : 'justify-center'}`}>
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent-text)]">LR</div>
+      {open && (
+        <div className="min-w-0">
+          <div className="truncate text-[12.5px] font-semibold leading-tight">Lightning Ridge</div>
+          <div className="truncate text-[11px] leading-tight text-[#6f6a64] dark:text-[#a8a29e]">Excavation</div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -148,7 +150,7 @@ export default function App() {
                   {section.items.map(({ tab, icon: Icon }) => (
                     <SidebarLink
                       key={tab}
-                      link={{ label: tab, icon: <Icon className="size-[18px]" stroke={1.75} /> }}
+                      link={{ label: tab, icon: <Icon className="size-4" strokeWidth={1.5} /> }}
                       active={activeTab === tab}
                       onClick={() => setActiveTab(tab)}
                       badge={tab === 'Bid Dashboard' && upcomingCount > 0 ? <CountBadge>{upcomingCount}</CountBadge> : undefined}
