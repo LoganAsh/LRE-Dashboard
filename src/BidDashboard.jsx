@@ -127,7 +127,7 @@ function BidCard({ bid, onTogglePriority, onNotBidding }) {
         </div>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           {bid.bid_time && <span style={{ fontSize: 11, color: 'var(--muted)' }}>🕐 {bid.bid_time}</span>}
-          {bid.bid_amount > 0 && <span style={{ fontSize: 11, color: 'var(--muted)' }}>${(bid.bid_amount / 1e6).toFixed(2)}M bid</span>}
+          {bid.bid_amount > 0 && <span style={{ fontSize: 11, color: 'var(--muted)' }}>${(bid.bid_amount / 1e6).toFixed(2)}M Bid</span>}
           {bid.notes && <span style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 240 }} title={bid.notes}>📝 {bid.notes}</span>}
         </div>
       </div>
@@ -223,10 +223,10 @@ export default function BidDashboard({ bids: initialBids }) {
     <div className="page">
       {/* Summary strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
-        <StatCard label="Upcoming Bids" value={upcomingBids.length} sub={`${bidsWeekly[0]} due in the next 7 days`} icon={IconCalendarEvent} series={bidsWeekly} tone="accent" />
-        <StatCard label="High Priority" value={highPri} sub={`of ${upcomingBids.length} upcoming`} icon={IconStar} tone="gold" />
-        <StatCard label="Past Due" value={pastDue} sub="awaiting a status update" icon={IconAlertTriangle} tone="danger" />
-        <StatCard label="Upcoming Pre-Bids" value={upcomingPreBids.length} sub={`${preBidsWeekly[0]} in the next 7 days`} icon={IconUsersGroup} series={preBidsWeekly} tone="violet" />
+        <StatCard label="Upcoming Bids" value={upcomingBids.length} sub={`${bidsWeekly[0]} Due in the Next 7 Days`} icon={IconCalendarEvent} series={bidsWeekly} tone="accent" />
+        <StatCard label="High Priority" value={highPri} sub={`Of ${upcomingBids.length} Upcoming`} icon={IconStar} tone="gold" />
+        <StatCard label="Past Due" value={pastDue} sub="Awaiting a Status Update" icon={IconAlertTriangle} tone="danger" />
+        <StatCard label="Upcoming Pre-Bids" value={upcomingPreBids.length} sub={`${preBidsWeekly[0]} in the Next 7 Days`} icon={IconUsersGroup} series={preBidsWeekly} tone="violet" />
       </div>
 
       {/* Main two-column layout */}
@@ -238,7 +238,7 @@ export default function BidDashboard({ bids: initialBids }) {
             <div style={{ padding: '2px 8px', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 10, fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{upcomingBids.length}</div>
           </div>
           {upcomingBids.length === 0
-            ? <div style={{ color: 'var(--muted)', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>No upcoming bids</div>
+            ? <div style={{ color: 'var(--muted)', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>No Upcoming Bids</div>
             : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {upcomingBids.map(b => <BidCard key={b.id} bid={b} onTogglePriority={handleTogglePriority} onNotBidding={handleNotBidding} />)}
               </div>
@@ -252,7 +252,7 @@ export default function BidDashboard({ bids: initialBids }) {
             <div style={{ padding: '2px 8px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, fontSize: 11, color: '#a78bfa', fontWeight: 600 }}>{upcomingPreBids.length}</div>
           </div>
           {upcomingPreBids.length === 0
-            ? <div style={{ color: 'var(--muted)', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>No upcoming pre-bids</div>
+            ? <div style={{ color: 'var(--muted)', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>No Upcoming Pre-Bids</div>
             : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {upcomingPreBids.map((b, i) => <PreBidCard key={b.id ?? i} bid={b} />)}
               </div>

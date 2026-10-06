@@ -170,7 +170,7 @@ export default function App() {
         <div className="topbar">
           <div className="topbar-title">{activeTab}</div>
           <div className="topbar-actions">
-            {lastSync && <span style={{ fontSize: 11, color: 'var(--muted)' }}>Last sync: {lastSync}</span>}
+            {lastSync && <span style={{ fontSize: 11, color: 'var(--muted)' }}>Last Sync: {lastSync}</span>}
             {syncMsg && <span style={{ fontSize: 11, color: syncing ? 'var(--accent-text)' : 'var(--won)' }}>{syncMsg}</span>}
             <button className="theme-toggle" onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme">
               <span className="theme-toggle-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
@@ -185,7 +185,7 @@ export default function App() {
         {loading ? (
           <div className="loading"><div className="spinner" />Loading bid data…</div>
         ) : error ? (
-          <div className="loading" style={{ color: 'var(--lost)' }}>Error loading data: {error}</div>
+          <div className="loading" style={{ color: 'var(--lost)' }}>Error Loading Data: {error}</div>
         ) : (
           <>
             {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}

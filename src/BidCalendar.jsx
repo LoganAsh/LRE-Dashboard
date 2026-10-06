@@ -9,12 +9,12 @@ const COLORS = { bid: '#f97316', prebid: '#7c6cf0', overdue: '#dc2626' };
 
 const KINDS = [
   { value: 'bid', label: 'Bids', color: COLORS.bid },
-  { value: 'prebid', label: 'Pre-bids', color: COLORS.prebid },
+  { value: 'prebid', label: 'Pre-Bids', color: COLORS.prebid },
 ];
 const LEGEND = [
-  { label: 'Bid due', color: COLORS.bid },
-  { label: 'Pre-bid', color: COLORS.prebid },
-  { label: 'Past due', color: COLORS.overdue },
+  { label: 'Bid Due', color: COLORS.bid },
+  { label: 'Pre-Bid', color: COLORS.prebid },
+  { label: 'Past Due', color: COLORS.overdue },
 ];
 
 // "2:00 PM" -> { h: 14, min: 0 }; anything unreadable -> null (event shows in the "no time" lane)
@@ -51,11 +51,11 @@ function buildEvents(bids) {
     const overdue = new Date(b.bid_date + 'T00:00:00') < today;
     out.push({
       id: `bid-${b.id}`, ref: b.id, kind: 'bid',
-      kindLabel: overdue ? 'Bid · past due' : 'Bid due',
+      kindLabel: overdue ? 'Bid · Past Due' : 'Bid Due',
       title: b.name, start, hasTime,
       color: overdue ? COLORS.overdue : COLORS.bid,
       priority: !!b.high_priority,
-      details: [clientsOf(b), b.bid_amount > 0 ? `${fmtFull$(b.bid_amount)} bid` : null, clip(b.notes)].filter(Boolean),
+      details: [clientsOf(b), b.bid_amount > 0 ? `${fmtFull$(b.bid_amount)} Bid` : null, clip(b.notes)].filter(Boolean),
     });
   });
 
@@ -63,11 +63,11 @@ function buildEvents(bids) {
     const { start, hasTime } = toStart(b.pre_bid, b.pre_bid_time);
     out.push({
       id: `prebid-${b.id}`, ref: b.id, kind: 'prebid',
-      kindLabel: 'Pre-bid',
+      kindLabel: 'Pre-Bid',
       title: b.name, start, hasTime,
       color: COLORS.prebid,
       priority: !!b.high_priority,
-      details: [clientsOf(b), b.bid_date ? `Bid due ${b.bid_date}` : null, clip(b.notes)].filter(Boolean),
+      details: [clientsOf(b), b.bid_date ? `Bid Due ${b.bid_date}` : null, clip(b.notes)].filter(Boolean),
     });
   });
 

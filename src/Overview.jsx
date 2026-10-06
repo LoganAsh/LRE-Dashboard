@@ -147,10 +147,10 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
 
       {/* KPIs */}
       <div className="kpi-grid">
-        <KPI label="Total Bid Volume" value={fmt$(stats.totalVolume)} sub={`${stats.active.length} active bids · monthly trend`} accent="accent" series={monthly.map(m => m.volume)} />
-        <KPI label="Won Volume" value={fmt$(stats.wonVolume)} sub={`${stats.won.length} projects awarded`} accent="won" />
-        <KPI label="Win Rate" value={`${stats.winRate.toFixed(0)}%`} sub={`${stats.lost.length} confirmed losses`} />
-        <KPI label="Avg Margin" value={`${(stats.avgMargin * 100).toFixed(1)}%`} sub={`${fmt$(stats.totalMargin)} total margin $`} />
+        <KPI label="Total Bid Volume" value={fmt$(stats.totalVolume)} sub={`${stats.active.length} Active Bids · Monthly Trend`} accent="accent" series={monthly.map(m => m.volume)} />
+        <KPI label="Won Volume" value={fmt$(stats.wonVolume)} sub={`${stats.won.length} Projects Awarded`} accent="won" />
+        <KPI label="Win Rate" value={`${stats.winRate.toFixed(0)}%`} sub={`${stats.lost.length} Confirmed Losses`} />
+        <KPI label="Avg Margin" value={`${(stats.avgMargin * 100).toFixed(1)}%`} sub={`${fmt$(stats.totalMargin)} Total Margin $`} />
       </div>
 
       {/* Bid Placement KPIs */}
@@ -159,11 +159,11 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
           <KPI
             label="Avg % High/Low"
             value={placeStats.avgPctHighLow !== null ? `${placeStats.avgPctHighLow > 0 ? '+' : ''}${placeStats.avgPctHighLow.toFixed(1)}%` : '—'}
-            sub={placeStats.avgPctHighLow !== null ? (placeStats.avgPctHighLow > 0 ? 'high vs. competition' : 'low vs. competition') : 'no data yet'}
+            sub={placeStats.avgPctHighLow !== null ? (placeStats.avgPctHighLow > 0 ? 'High vs. Competition' : 'Low vs. Competition') : 'No Data Yet'}
             accent={placeStats.avgPctHighLow !== null && placeStats.avgPctHighLow < 0 ? 'won' : undefined}
           />
-          <KPI label="Avg Bid Place" value={placeStats.avgPlace !== null ? placeStats.avgPlace.toFixed(1) : '—'} sub={`${placeStats.withPlace.length} bids tracked`} />
-          <KPI label="1st Place Finishes" value={placeStats.firstPlaceCount} sub={`of ${placeStats.withPlace.length} tracked results`} accent="won" />
+          <KPI label="Avg Bid Place" value={placeStats.avgPlace !== null ? placeStats.avgPlace.toFixed(1) : '—'} sub={`${placeStats.withPlace.length} Bids Tracked`} />
+          <KPI label="1st Place Finishes" value={placeStats.firstPlaceCount} sub={`Of ${placeStats.withPlace.length} Tracked Results`} accent="won" />
         </div>
       )}
 
@@ -182,11 +182,11 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
       {/* Charts row 2 */}
       <div className="chart-grid">
         <div className="chart-card">
-          <div className="chart-title">Outcome Distribution <span>active bids</span></div>
+          <div className="chart-title">Outcome Distribution <span>Active Bids</span></div>
           <div className="chart-wrap"><Doughnut data={donutChart} options={donutOpts} /></div>
         </div>
         <div className="chart-card">
-          <div className="chart-title">Margin % Distribution <span>active bids</span></div>
+          <div className="chart-title">Margin % Distribution <span>Active Bids</span></div>
           <div className="chart-wrap"><Bar data={marginBins} options={getChartDefaults()} /></div>
         </div>
       </div>

@@ -251,7 +251,7 @@ function PlanEditor({ plan, project, sovCategories, allCrew, allEquipment, allPr
                 <div key={wi} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:14}}>
                   <div style={{display:'flex',gap:8,marginBottom:8}}>
                     <select value={w.sov_category||''} onChange={e=>updWork(wi,'sov_category',e.target.value)} style={{...field,flex:'0 0 180px'}}>
-                      <option value="">Free text / other</option>
+                      <option value="">Free Text / Other</option>
                       {sovCategories.map(c=><option key={c} value={c}>{c}</option>)}
                     </select>
                     <input value={w.description} onChange={e=>updWork(wi,'description',e.target.value)} style={{...field,flex:1}} placeholder="Work description…" />
@@ -267,7 +267,7 @@ function PlanEditor({ plan, project, sovCategories, allCrew, allEquipment, allPr
                         <button onClick={()=>removeCheck(wi,ci)} style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:13,flexShrink:0}} onMouseEnter={e=>e.currentTarget.style.color='var(--lost)'} onMouseLeave={e=>e.currentTarget.style.color='var(--muted)'}>✕</button>
                       </div>
                     ))}
-                    <button onClick={()=>addCheck(wi)} style={{alignSelf:'flex-start',padding:'3px 10px',fontSize:10,fontFamily:'var(--font-mono)',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:3,color:'var(--muted)',cursor:'pointer',marginTop:2}}>+ Checklist item</button>
+                    <button onClick={()=>addCheck(wi)} style={{alignSelf:'flex-start',padding:'3px 10px',fontSize:10,fontFamily:'var(--font-mono)',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:3,color:'var(--muted)',cursor:'pointer',marginTop:2}}>+ Checklist Item</button>
                   </div>
                 </div>
               ))}
@@ -279,7 +279,7 @@ function PlanEditor({ plan, project, sovCategories, allCrew, allEquipment, allPr
             <Section title="Crew This Week" action={
               availableCrew.length > 0 ? (
                 <select defaultValue="" onChange={e=>{addCrewMember(e.target.value);e.target.value='';}} style={{...field,width:'auto',fontSize:11,padding:'4px 8px'}}>
-                  <option value="">+ Add crew member</option>
+                  <option value="">+ Add Crew Member</option>
                   {availableCrew.map(c=><option key={c.id} value={c.id}>{c.name} {c.role?`(${c.role})`:''}</option>)}
                 </select>
               ) : null
@@ -304,7 +304,7 @@ function PlanEditor({ plan, project, sovCategories, allCrew, allEquipment, allPr
             <Section title="Equipment This Week" action={
               availableEquip.length > 0 ? (
                 <select defaultValue="" onChange={e=>{addEquipment(e.target.value);e.target.value='';}} style={{...field,width:'auto',fontSize:11,padding:'4px 8px'}}>
-                  <option value="">+ Add equipment</option>
+                  <option value="">+ Add Equipment</option>
                   {availableEquip.map(e=><option key={e.id} value={e.id}>{e.name}{e.unit_number?` #${e.unit_number}`:''}</option>)}
                 </select>
               ) : null
@@ -325,7 +325,7 @@ function PlanEditor({ plan, project, sovCategories, allCrew, allEquipment, allPr
                     <div>
                       <Label>Assigned to Job</Label>
                       <select value={e.project_id||''} onChange={x=>updEquip(i,'project_id',x.target.value?parseInt(x.target.value):null)} style={{...field,fontSize:11}}>
-                        <option value="">— Select project —</option>
+                        <option value="">— Select Project —</option>
                         {allProjects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                     </div>
@@ -396,7 +396,7 @@ function PlanCard({ plan, project, sovCategories, allCrew, allEquipment, allProj
           <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:14}}>{fmtWeek(plan.week_start)}</div>
           <div style={{color:'var(--muted)',fontSize:11,marginTop:1}}>
             {plan.foreman && <span>Foreman: {plan.foreman}</span>}
-            {totalItems > 0 && <span style={{marginLeft:10}}>{doneItems}/{totalItems} tasks · {pct}% complete</span>}
+            {totalItems > 0 && <span style={{marginLeft:10}}>{doneItems}/{totalItems} Tasks · {pct}% Complete</span>}
           </div>
         </div>
         {totalItems > 0 && (
@@ -593,7 +593,7 @@ export default function WeeklySchedule() {
       ) : activeProjects.length === 0 ? (
         <div style={{textAlign:'center',color:'var(--muted)',padding:'48px 0'}}>
           <div style={{fontSize:36,marginBottom:12}}>📅</div>
-          <div style={{fontFamily:'var(--font-display)',fontSize:16,marginBottom:8}}>No active projects</div>
+          <div style={{fontFamily:'var(--font-display)',fontSize:16,marginBottom:8}}>No Active Projects</div>
           <div style={{fontSize:13}}>Create a project in the Projects tab to get started.</div>
         </div>
       ) : (

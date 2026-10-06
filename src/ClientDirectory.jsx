@@ -192,7 +192,7 @@ function ClientDetail({ clientName, bids, onClose }) {
                     <div key={p.id} style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>{fmtFull$((p.original_contract || 0) + (p.approved_cos || 0))} revised contract</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>{fmtFull$((p.original_contract || 0) + (p.approved_cos || 0))} Revised Contract</div>
                       </div>
                       <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: (PROJECT_STATUS_COLORS[p.status] || '#7a8298') + '22', color: PROJECT_STATUS_COLORS[p.status] || '#7a8298', whiteSpace: 'nowrap' }}>{p.status}</span>
                     </div>
@@ -305,7 +305,7 @@ export default function ClientDirectory({ bids }) {
           <option value="winrate">Sort: Win Rate</option>
           <option value="recent">Sort: Most Recent</option>
         </select>
-        <span className="table-count">{filtered.length} clients</span>
+        <span className="table-count">{filtered.length} Clients</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -322,13 +322,13 @@ export default function ClientDirectory({ bids }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-                {c.bidCount} bids · {c.wonCount} won · {c.winRate.toFixed(0)}% win rate
-                {c.lastBidDate && <span> · last bid {c.lastBidDate}</span>}
+                {c.bidCount} Bids · {c.wonCount} Won · {c.winRate.toFixed(0)}% Win Rate
+                {c.lastBidDate && <span> · Last Bid {c.lastBidDate}</span>}
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{fmt$(c.totalVolume)}</div>
-              {c.awardedVolume > 0 && <div style={{ fontSize: 11, color: 'var(--won)' }}>{fmt$(c.awardedVolume)} awarded</div>}
+              {c.awardedVolume > 0 && <div style={{ fontSize: 11, color: 'var(--won)' }}>{fmt$(c.awardedVolume)} Awarded</div>}
             </div>
           </button>
         ))}

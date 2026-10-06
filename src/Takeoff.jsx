@@ -88,7 +88,7 @@ function CrossSectionView({ footing, wall, calc }) {
   if (fW <= 0 && wW <= 0) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: 'var(--muted)', fontSize: 13 }}>
-        Enter dimensions to see the cross-section
+        Enter Dimensions to See the Cross-Section
       </div>
     );
   }
@@ -180,7 +180,7 @@ function CrossSectionView({ footing, wall, calc }) {
             );
           })}
 
-          <text x={footingX + fW / 2} y={footingY + fH + 0.55} fontSize={0.2} fill="var(--muted)" textAnchor="middle" fontFamily="monospace">{fmtNum(fW,1)}' W × {fmtNum(fH,1)}' H</text>
+          <text x={footingX + fW / 2} y={footingY + fH + 0.55} fontSize={0.2} fill="var(--muted)" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif">{fmtNum(fW,1)}' W × {fmtNum(fH,1)}' H</text>
         </>
       )}
 
@@ -198,7 +198,7 @@ function CrossSectionView({ footing, wall, calc }) {
           {embedment > 0 && fH > 0 && (
             <>
               <line x1={wallX - 0.15} y1={footingY + fH} x2={wallX - 0.15} y2={vertBarBottom} stroke="#2ebd7e" strokeWidth={0.02} strokeDasharray="0.06,0.05" />
-              <text x={wallX - 0.22} y={(footingY + fH + vertBarBottom) / 2} fontSize={0.15} fill="#2ebd7e" textAnchor="end" fontFamily="monospace">{fmtNum(embedment,2)}' emb.</text>
+              <text x={wallX - 0.22} y={(footingY + fH + vertBarBottom) / 2} fontSize={0.15} fill="#2ebd7e" textAnchor="end" fontFamily="Inter, system-ui, sans-serif">{fmtNum(embedment,2)}' Emb.</text>
             </>
           )}
 
@@ -211,20 +211,20 @@ function CrossSectionView({ footing, wall, calc }) {
             ))
           ))}
 
-          <text x={wallX + wW / 2} y={wallY - 0.25} fontSize={0.2} fill="var(--muted)" textAnchor="middle" fontFamily="monospace">{fmtNum(wW,2)}' W × {fmtNum(wH,1)}' H</text>
+          <text x={wallX + wW / 2} y={wallY - 0.25} fontSize={0.2} fill="var(--muted)" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif">{fmtNum(wW,2)}' W × {fmtNum(wH,1)}' H</text>
         </>
       )}
 
       {/* Legend */}
       <g transform={`translate(${padding * 0.25}, ${padding * 0.25})`}>
         <circle cx={0.1} cy={0} r={0.05} fill="#e8c547" />
-        <text x={0.25} y={0.08} fontSize={0.15} fill="var(--muted)" fontFamily="monospace">Footing long.</text>
+        <text x={0.25} y={0.08} fontSize={0.15} fill="var(--muted)" fontFamily="Inter, system-ui, sans-serif">Footing Long.</text>
         <line x1={0.05} y1={0.28} x2={0.15} y2={0.28} stroke="#f97316" strokeWidth={0.03} strokeDasharray="0.06,0.04" />
-        <text x={0.25} y={0.33} fontSize={0.15} fill="var(--muted)" fontFamily="monospace">Footing trans.</text>
+        <text x={0.25} y={0.33} fontSize={0.15} fill="var(--muted)" fontFamily="Inter, system-ui, sans-serif">Footing Trans.</text>
         <circle cx={0.1} cy={0.53} r={0.05} fill="#facc15" />
-        <text x={0.25} y={0.61} fontSize={0.15} fill="var(--muted)" fontFamily="monospace">Wall horiz.</text>
+        <text x={0.25} y={0.61} fontSize={0.15} fill="var(--muted)" fontFamily="Inter, system-ui, sans-serif">Wall Horiz.</text>
         <line x1={0.05} y1={0.78} x2={0.15} y2={0.78} stroke="#2ebd7e" strokeWidth={0.05} />
-        <text x={0.25} y={0.83} fontSize={0.15} fill="var(--muted)" fontFamily="monospace">Wall vert. (+ embed.)</text>
+        <text x={0.25} y={0.83} fontSize={0.15} fill="var(--muted)" fontFamily="Inter, system-ui, sans-serif">Wall Vert. (+ Embed.)</text>
       </g>
     </svg>
   );
@@ -364,31 +364,31 @@ export default function Takeoff() {
 
             <Section title="Footing Rebar" color="#e8c547" />
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Longitudinal (runs the length — auto-centered across width)</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Longitudinal (Runs the Length — Auto-Centered Across Width)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
-                <NumField label="O.C. Spacing (horiz.)" value={footing.longSpacing} onChange={v => setF('longSpacing', v)} suffix="ft" />
+                <NumField label="O.C. Spacing (Horiz.)" value={footing.longSpacing} onChange={v => setF('longSpacing', v)} suffix="ft" />
                 <NumField label="Rows" value={footing.longRows} onChange={v => setF('longRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(footing.longBarSize, v => setF('longBarSize', v))}</div>
               </div>
               {parseInt(footing.longRows) > 1 && (
                 <div style={{ marginBottom: 6 }}>
-                  <NumField label="Row Spacing (vertical, between rows)" value={footing.longRowSpacing} onChange={v => setF('longRowSpacing', v)} suffix="ft" placeholder="e.g. 0.3" />
+                  <NumField label="Row Spacing (Vertical, Between Rows)" value={footing.longRowSpacing} onChange={v => setF('longRowSpacing', v)} suffix="ft" placeholder="e.g. 0.3" />
                 </div>
               )}
               {results.fLongCount > 0 && (
-                <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.fLongCount} bars, {fmtNum(results.fLongBufferCalc)} ft buffer each edge</div>
+                <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.fLongCount} Bars, {fmtNum(results.fLongBufferCalc)} ft Buffer Each Edge</div>
               )}
             </div>
             <div>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Transverse (perpendicular, ties the mat)</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Transverse (Perpendicular, Ties the Mat)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
-                <NumField label="O.C. Spacing (horiz.)" value={footing.transverseSpacing} onChange={v => setF('transverseSpacing', v)} suffix="ft" />
+                <NumField label="O.C. Spacing (Horiz.)" value={footing.transverseSpacing} onChange={v => setF('transverseSpacing', v)} suffix="ft" />
                 <NumField label="Edge Buffer" value={footing.transverseBuffer} onChange={v => setF('transverseBuffer', v)} suffix="ft" />
                 <NumField label="Rows" value={footing.transverseRows} onChange={v => setF('transverseRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(footing.transBarSize, v => setF('transBarSize', v))}</div>
               </div>
               {parseInt(footing.transverseRows) > 1 && (
-                <NumField label="Row Spacing (vertical, between rows)" value={footing.transverseRowSpacing} onChange={v => setF('transverseRowSpacing', v)} suffix="ft" placeholder="e.g. 0.3" />
+                <NumField label="Row Spacing (Vertical, Between Rows)" value={footing.transverseRowSpacing} onChange={v => setF('transverseRowSpacing', v)} suffix="ft" placeholder="e.g. 0.3" />
               )}
             </div>
           </div>
@@ -402,28 +402,28 @@ export default function Takeoff() {
               <NumField label="Height" value={wall.height} onChange={v => setW('height', v)} suffix="ft" />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <NumField label="Vertical Bar Embedment into Footing" value={wall.embedment} onChange={v => setW('embedment', v)} suffix="ft" placeholder="e.g. 1.5" />
+              <NumField label="Vertical Bar Embedment Into Footing" value={wall.embedment} onChange={v => setW('embedment', v)} suffix="ft" placeholder="e.g. 1.5" />
             </div>
 
             <Section title="Wall Rebar" color="#2ebd7e" />
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Vertical (runs the height + embedment — auto-centered across length)</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Vertical (Runs the Height + Embedment — Auto-Centered Across Length)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 60px', gap: 8, marginBottom: 6 }}>
                 <NumField label="O.C. Spacing" value={wall.vertSpacing} onChange={v => setW('vertSpacing', v)} suffix="ft" />
-                <NumField label="Rows (curtains)" value={wall.vertRows} onChange={v => setW('vertRows', v)} placeholder="1" />
+                <NumField label="Rows (Curtains)" value={wall.vertRows} onChange={v => setW('vertRows', v)} placeholder="1" />
                 <div><Label>Size</Label>{barSizeSelect(wall.vertBarSize, v => setW('vertBarSize', v))}</div>
               </div>
               {parseInt(wall.vertRows) > 1 && (
                 <div style={{ marginBottom: 6 }}>
-                  <NumField label="Row Spacing (thru wall thickness)" value={wall.vertRowSpacing} onChange={v => setW('vertRowSpacing', v)} suffix="ft" placeholder="e.g. 0.5" />
+                  <NumField label="Row Spacing (Thru Wall Thickness)" value={wall.vertRowSpacing} onChange={v => setW('vertRowSpacing', v)} suffix="ft" placeholder="e.g. 0.5" />
                 </div>
               )}
               {results.vertCount > 0 && (
-                <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.vertCount} bars, {fmtNum(results.vertBufferCalc)} ft buffer each end</div>
+                <div style={{ fontSize: 10, color: 'var(--accent)' }}>→ {results.vertCount} Bars, {fmtNum(results.vertBufferCalc)} ft Buffer Each End</div>
               )}
             </div>
             <div>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Horizontal (runs the length)</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Horizontal (Runs the Length)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 60px', gap: 8 }}>
                 <NumField label="O.C. Spacing" value={wall.horizSpacing} onChange={v => setW('horizSpacing', v)} suffix="ft" />
                 <NumField label="Top/Bot Buffer" value={wall.horizBuffer} onChange={v => setW('horizBuffer', v)} suffix="ft" />
@@ -456,7 +456,7 @@ export default function Takeoff() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10 }}>
               <StatBox label="Footing" value={`${fmtNum(results.footingCY)} CY`} />
               <StatBox label="Wall" value={`${fmtNum(results.wallCY)} CY`} />
-              <StatBox label="Total (w/ waste)" value={`${fmtNum(results.totalCY)} CY`} color="var(--accent)" />
+              <StatBox label="Total (w/ Waste)" value={`${fmtNum(results.totalCY)} CY`} color="var(--accent)" />
             </div>
           </div>
 
@@ -475,7 +475,7 @@ export default function Takeoff() {
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
             <Section title="Wall Rebar" color="#2ebd7e" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10, marginBottom: 10 }}>
-              <StatBox label="Vertical Bars" value={`${results.vertCount} × ${results.vertRows} row(s)`} sub={`${wall.vertBarSize} · ${fmtNum(results.wVertLF)} LF (incl. embed.)`} />
+              <StatBox label="Vertical Bars" value={`${results.vertCount} × ${results.vertRows} row(s)`} sub={`${wall.vertBarSize} · ${fmtNum(results.wVertLF)} LF (Incl. Embed.)`} />
               <StatBox label="Horizontal Bars" value={`${results.wHorizCount} × ${results.wHorizRows} row(s)`} sub={`${wall.horizBarSize} · ${fmtNum(results.wHorizLF)} LF`} />
               <StatBox label="Total LF" value={fmtNum(results.wVertLF + results.wHorizLF)} />
               <StatBox label="Total Weight" value={`${fmtNum(results.wVertWeight + results.wHorizWeight, 0)} lbs`} />

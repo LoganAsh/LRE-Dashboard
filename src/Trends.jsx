@@ -115,19 +115,19 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       </div>
       <div className="chart-grid full" style={{ marginBottom: 14 }}>
         <div className="chart-card">
-          <div className="chart-title">Annual Bid Volume <span>total $</span></div>
+          <div className="chart-title">Annual Bid Volume <span>Total $</span></div>
           <div className="chart-wrap"><Bar data={volChart} options={volOpts} /></div>
         </div>
       </div>
       <div className="chart-grid full" style={{ marginBottom: 14 }}>
         <div className="chart-card">
-          <div className="chart-title">Bid Count vs. Won Count <span>by year</span></div>
+          <div className="chart-title">Bid Count vs. Won Count <span>By Year</span></div>
           <div className="chart-wrap"><Bar data={countChart} options={countOpts} /></div>
         </div>
       </div>
       <div className="chart-grid full">
         <div className="chart-card">
-          <div className="chart-title">Average Margin % <span>by year</span></div>
+          <div className="chart-title">Average Margin % <span>By Year</span></div>
           <div className="chart-wrap"><Line data={marginChart} options={marginOpts} /></div>
         </div>
       </div>

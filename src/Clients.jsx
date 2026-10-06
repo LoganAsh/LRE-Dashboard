@@ -105,7 +105,7 @@ export default function Clients({ bids }) {
 
       {/* Awarded bar list */}
       <div className="chart-card">
-        <div className="chart-title">Top 10 Clients by Total Awarded Bid Value <span>won projects only</span></div>
+        <div className="chart-title">Top 10 Clients by Total Awarded Bid Value <span>Won Projects Only</span></div>
         {clientsByAwarded.length === 0 ? (
           <div style={{ color: 'var(--muted)', fontSize: 12, padding: '20px 0', textAlign: 'center' }}>
             No awarded bids recorded yet. Use the Status modal in Bid Log to enter award amounts.

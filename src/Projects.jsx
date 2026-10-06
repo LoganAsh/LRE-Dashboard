@@ -212,9 +212,9 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
         <div style={{ padding:20 }}>
           {isNew && wonBids.length > 0 && (
             <div style={{ marginBottom:16 }}>
-              <Label>Link to Won Bid (auto-fills fields)</Label>
+              <Label>Link to Won Bid (Auto-Fills Fields)</Label>
               <select value={form.bid_id} onChange={e => handleBidSelect(e.target.value)} style={field}>
-                <option value="">— Select a won bid —</option>
+                <option value="">— Select a Won Bid —</option>
                 {wonBids.map(b => <option key={b.id} value={b.id}>{b.name} · {b.bid_date} · {fmtFull$(b.award_amount || b.bid_amount)}</option>)}
               </select>
             </div>
@@ -371,7 +371,7 @@ function ProjectCard({ project, wonBids, onEdit, onDeleted }) {
           <div style={{ display:'flex', gap:14, flexWrap:'wrap', fontSize:11, color:'var(--muted)' }}>
             {project.start_date && <span>Start: {project.start_date}</span>}
             {project.est_completion_date && <span>Est. Complete: {project.est_completion_date}</span>}
-            {sovSummary && <span>SOV: {sovSummary.lineCount} items · {sovSummary.avgPct.toFixed(0)}% avg · {fmtFull$(sovSummary.totalBilled)} billed</span>}
+            {sovSummary && <span>SOV: {sovSummary.lineCount} Items · {sovSummary.avgPct.toFixed(0)}% Avg · {fmtFull$(sovSummary.totalBilled)} Billed</span>}
           </div>
           <button onClick={() => setShowSov(true)} style={{ padding:'5px 12px', fontSize:11, fontFamily:'var(--font-mono)', background:'var(--accent-light)', border:'1px solid var(--accent)', borderRadius:4, color:'var(--accent)', cursor:'pointer', whiteSpace:'nowrap' }}>
             📋 Schedule of Values
@@ -454,7 +454,7 @@ export default function Projects({ bids }) {
       ) : filtered.length === 0 ? (
         <div style={{ textAlign:'center', color:'var(--muted)', padding:'48px 0' }}>
           <div style={{ fontSize:36, marginBottom:12 }}>🏗️</div>
-          <div style={{ fontFamily:'var(--font-display)', fontSize:16, marginBottom:8 }}>No projects yet</div>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:16, marginBottom:8 }}>No Projects Yet</div>
           <div style={{ fontSize:13, marginBottom:20 }}>Create a project or mark a bid as Won to get started.</div>
           <button onClick={() => setModal('new')} style={{ padding:'8px 20px', background:'var(--accent)', border:'none', borderRadius:6, color:'#fff', fontFamily:'var(--font-mono)', fontSize:12, fontWeight:600, cursor:'pointer' }}>+ New Project</button>
         </div>

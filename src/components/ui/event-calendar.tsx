@@ -120,7 +120,7 @@ function EventChip({
           <div className="mt-2 text-[11px] text-[var(--muted-foreground)]">
             {event.start.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             {" · "}
-            {event.hasTime ? longTime(event.start) : "no time set"}
+            {event.hasTime ? longTime(event.start) : "No Time Set"}
           </div>
         </div>
       )}
@@ -181,7 +181,7 @@ function MonthView({
                     onClick={() => onDayClick(day)}
                     className={cn(plainBtn, "px-1 text-[11px] text-[var(--muted-foreground)] hover:text-[var(--foreground)]")}
                   >
-                    +{evs.length - 3} more
+                    +{evs.length - 3} More
                   </button>
                 )}
               </div>
@@ -236,7 +236,7 @@ function TimeGrid({
         {untimed.length > 0 && (
           <div className="grid" style={{ gridTemplateColumns: cols }}>
             <div className="border-b border-r border-[color:var(--border)] p-2 text-[10px] uppercase tracking-wide text-[var(--muted-foreground)]">
-              No time
+              No Time
             </div>
             {days.map((d) => (
               <div key={d.toISOString()} className={cn(cell, "space-y-1")}>
@@ -437,7 +437,7 @@ export function EventCalendar({ events, kinds, legend, onEventClick, defaultView
           )}
         </div>
         <Tabs<CalView>
-          label="Calendar view"
+          label="Calendar View"
           value={view}
           onChange={setView}
           items={[
@@ -471,7 +471,7 @@ export function EventCalendar({ events, kinds, legend, onEventClick, defaultView
           )}
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <Tabs label="Filter by type" value={kindFilter} onChange={setKindFilter} items={kindTabs} />
+          <Tabs label="Filter by Type" value={kindFilter} onChange={setKindFilter} items={kindTabs} />
         </div>
       </div>
 
@@ -483,7 +483,7 @@ export function EventCalendar({ events, kinds, legend, onEventClick, defaultView
               {l.label}
             </span>
           ))}
-          <span className="flex items-center gap-1.5"><span className="text-[#d99a06]">★</span>High priority</span>
+          <span className="flex items-center gap-1.5"><span className="text-[#d99a06]">★</span>High Priority</span>
         </div>
       )}
 

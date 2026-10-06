@@ -146,7 +146,7 @@ export function StatusModal({ bid, onClose, onSave }) {
             ))}
           </div>
           <div style={{ background: (awardNum && awardNum > 0) ? 'rgba(46,189,126,0.1)' : 'var(--surface2)', border: `1px solid ${(awardNum && awardNum > 0) ? 'rgba(46,189,126,0.2)' : 'var(--border)'}`, borderRadius: 6, padding: '10px 12px', marginBottom: 16 }}>
-            <div style={{ fontSize: 9, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Profit + OH {(awardNum && awardNum > 0) ? '(on award)' : '(on bid)'}</div>
+            <div style={{ fontSize: 9, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Profit + OH {(awardNum && awardNum > 0) ? '(On Award)' : '(On Bid)'}</div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: (awardNum && awardNum > 0) ? 'var(--won)' : 'var(--text)' }}>{fmt$(profit)}</div>
           </div>
           {bid.pre_bid && (
@@ -161,13 +161,13 @@ export function StatusModal({ bid, onClose, onSave }) {
             </div>
           )}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Award Amount <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(updates profit calculation)</span></label>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Award Amount <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(Updates Profit Calculation)</span></label>
             <input type="number" placeholder="Enter award amount if won…" value={awardAmt} onChange={e => setAwardAmt(e.target.value)} style={field} />
           </div>
 
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-              Bid Results {clientNames.length > 1 && <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(one per client)</span>}
+              Bid Results {clientNames.length > 1 && <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>(One per Client)</span>}
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {clientNames.map(c => (
@@ -210,7 +210,7 @@ export function StatusModal({ bid, onClose, onSave }) {
           {status === 'Won' && (
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                Awarded By {clientNames.length > 1 && <span style={{ color: 'var(--lost)' }}>*required</span>}
+                Awarded By {clientNames.length > 1 && <span style={{ color: 'var(--lost)' }}>*Required</span>}
               </label>
               {clientNames.length === 1 ? (
                 <div style={{ padding: '7px 10px', background: 'rgba(46,189,126,0.1)', border: '1px solid rgba(46,189,126,0.3)', borderRadius: 4, color: 'var(--won)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
@@ -218,7 +218,7 @@ export function StatusModal({ bid, onClose, onSave }) {
                 </div>
               ) : (
                 <select value={awardedBy} onChange={e => setAwardedBy(e.target.value)} style={{ ...field, color: awardedBy ? 'var(--text)' : 'var(--muted)', borderColor: !awardedBy ? 'var(--lost)' : 'var(--border)' }}>
-                  <option value="">— Select awarding client —</option>
+                  <option value="">— Select Awarding Client —</option>
                   {clientNames.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               )}
@@ -234,7 +234,7 @@ export function StatusModal({ bid, onClose, onSave }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
               <span style={{ fontSize: 14 }}>★</span>
-              {highPriority ? 'High Priority — click to remove' : 'Mark as High Priority'}
+              {highPriority ? 'High Priority — Click to Remove' : 'Mark as High Priority'}
             </button>
           </div>
           <div style={{ marginBottom: 14 }}>
@@ -247,7 +247,7 @@ export function StatusModal({ bid, onClose, onSave }) {
               <div>
                 <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Last Follow-Up</label>
                 <input type="date" value={lastFollowup} onChange={e => setLastFollowup(e.target.value)} style={{ ...field, colorScheme: 'dark' }} />
-                <button onClick={() => setLastFollowup(today)} style={{ marginTop: 5, fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)' }}>Set to today</button>
+                <button onClick={() => setLastFollowup(today)} style={{ marginTop: 5, fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)' }}>Set to Today</button>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Next Follow-Up</label>
@@ -374,7 +374,7 @@ export default function BidLog({ bids: initialBids }) {
           <option value="Public">Public</option>
           <option value="Private">Private</option>
         </select>
-        <span className="table-count">{filtered.length} bids</span>
+        <span className="table-count">{filtered.length} Bids</span>
       </div>
       <div className="table-wrap">
         <table>
