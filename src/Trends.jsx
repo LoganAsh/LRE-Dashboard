@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
-import { useBidStats } from './hooks.js';
-import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, filterByType } from './utils.js';
+import { useBidStats, useChartKey } from './hooks.js';
+import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, getLegendLabels, filterByType } from './utils.js';
 
 function yearStats(bids, year) {
   const s = useBidStats(bids, year);
@@ -9,6 +9,7 @@ function yearStats(bids, year) {
 }
 
 export default function Trends({ bids, typeFilter, setTypeFilter }) {
+  const chartKey = useChartKey();
   const typedBids = useMemo(() => filterByType(bids, typeFilter), [bids, typeFilter]);
   const stats = useMemo(() => YEARS.map(y => {
     const active = typedBids.filter(b => b.year === y && b.bid_amount > 0);
@@ -80,7 +81,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       ...getChartDefaults().scales,
       y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => fmt$(v) } },
     },
-  }), []);
+  }), [chartKey]);
 
   const countOpts = useMemo(() => ({
     ...getChartDefaults(),
@@ -88,10 +89,10 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       ...getChartDefaults().plugins,
       legend: {
         display: true,
-        labels: { color: '#7a8298', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 12 },
+        labels: getLegendLabels(),
       },
     },
-  }), []);
+  }), [chartKey]);
 
   const marginOpts = useMemo(() => ({
     ...getChartDefaults(),
@@ -103,7 +104,7 @@ export default function Trends({ bids, typeFilter, setTypeFilter }) {
       ...getChartDefaults().scales,
       y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => v + '%' } },
     },
-  }), []);
+  }), [chartKey]);
 
   return (
     <div className="page">

@@ -145,3 +145,27 @@ export function placementStats(placements, clientName = null) {
 
   return { count: filtered.length, avgPctHighLow, avgPlace, firstPlaceCount, withPct, withPlace };
 }
+
+// Chart options are computed from the current theme and font. This returns a value that changes when the
+// theme is toggled or the web font finishes loading, so charts can recompute (and redraw) at those moments.
+export function useChartKey() {
+  const read = () => document.documentElement.getAttribute('data-theme') || 'light';
+  const [theme, setTheme] = useState(read);
+  const [fontsReady, setFontsReady] = useState(() => !document.fonts || document.fonts.status === 'loaded');
+
+  useEffect(() => {
+    const el = document.documentElement;
+    const obs = new MutationObserver(() => setTheme(read()));
+    obs.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (fontsReady || !document.fonts) return;
+    let alive = true;
+    document.fonts.ready.then(() => { if (alive) setFontsReady(true); });
+    return () => { alive = false; };
+  }, [fontsReady]);
+
+  return `${theme}-${fontsReady ? 'fonts' : 'loading'}`;
+}

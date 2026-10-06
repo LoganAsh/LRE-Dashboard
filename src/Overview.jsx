@@ -4,11 +4,12 @@ import {
   LineElement, PointElement, ArcElement, Tooltip, Legend, Filler,
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import { useBidStats, useMonthlyData, usePlacements, placementStats } from './hooks.js';
+import { useBidStats, useMonthlyData, usePlacements, placementStats, useChartKey } from './hooks.js';
 import { Card, CardStatSparkline } from './components/ui/card';
-import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, filterByType } from './utils.js';
+import { fmt$, fmtFull$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults, getLegendLabels, CHART_FONT, filterByType } from './utils.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler);
+ChartJS.defaults.font.family = CHART_FONT;   // global: every chart's legend, ticks and tooltips
 
 function KPI({ label, value, sub, accent, series }) {
   const valueColor = accent === 'won' ? 'var(--won)' : accent === 'accent' ? 'var(--accent-text)' : 'var(--foreground)';
@@ -28,6 +29,7 @@ function KPI({ label, value, sub, accent, series }) {
 }
 
 export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, setTypeFilter }) {
+  const chartKey = useChartKey();
   const typedBids = filterByType(bids, typeFilter);
   const stats = useBidStats(typedBids, yearFilter);
   const monthly = useMonthlyData(typedBids, yearFilter);
@@ -113,7 +115,7 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
       ...getChartDefaults().scales,
       y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => fmt$(v) } },
     },
-  }), []);
+  }), [chartKey]);
 
   const donutOpts = useMemo(() => ({
     responsive: true,
@@ -123,11 +125,11 @@ export default function Overview({ bids, yearFilter, setYearFilter, typeFilter, 
       legend: {
         display: true,
         position: 'right',
-        labels: { color: '#7a8298', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 12, padding: 12 },
+        labels: getLegendLabels(),
       },
       tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } },
     },
-  }), []);
+  }), [chartKey]);
 
   return (
     <div className="page">

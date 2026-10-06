@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { useTopClients, parseClients } from './hooks.js';
+import { useTopClients, parseClients, useChartKey } from './hooks.js';
 import { fmt$, CHART_COLORS, CHART_DEFAULTS, YEARS, getChartDefaults } from './utils.js';
 
 export default function Clients({ bids }) {
+  const chartKey = useChartKey();
   const [yearFilter, setYearFilter] = useState('all');
 
   const filteredBids = useMemo(() =>
@@ -67,7 +68,7 @@ export default function Clients({ bids }) {
     ...getChartDefaults(),
     plugins: { ...getChartDefaults().plugins, tooltip: { ...getChartDefaults().plugins.tooltip, callbacks: { label: ctx => ' ' + fmt$(ctx.raw) } } },
     scales: { ...getChartDefaults().scales, y: { ...getChartDefaults().scales.y, ticks: { ...getChartDefaults().scales.y.ticks, callback: v => fmt$(v) } } },
-  }), []);
+  }), [chartKey]);
 
   return (
     <div className="page">

@@ -22,6 +22,20 @@ export const CHART_COLORS = {
   pendingAlpha: 'rgba(138,133,128,0.4)',
 };
 
+// Chart text is drawn on a canvas, so it can't inherit the page font; every chart uses this one stack.
+export const CHART_FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+// Legend (the "key") style shared by every chart, in the app font and theme colors.
+export function getLegendLabels(extra = {}) {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    color: isDark ? '#c4bfb8' : '#57534e',
+    font: { family: CHART_FONT, size: 12 },
+    usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 14,
+    ...extra,
+  };
+}
+
 // Reads CSS variables so charts respond to light/dark theme
 function getCSSVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -46,18 +60,18 @@ export function getChartDefaults() {
         borderWidth: 1,
         titleColor: tooltipTitle,
         bodyColor: tooltipBody,
-        titleFont: { family: 'Inter' },
-        bodyFont: { family: 'Inter' },
+        titleFont: { family: CHART_FONT },
+        bodyFont: { family: CHART_FONT },
       },
     },
     scales: {
       x: {
         grid: { color: gridColor, drawBorder: false },
-        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } },
+        ticks: { color: tickColor, font: { family: CHART_FONT, size: 11 } },
       },
       y: {
         grid: { color: gridColor, drawBorder: false },
-        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } },
+        ticks: { color: tickColor, font: { family: CHART_FONT, size: 11 } },
       },
     },
   };
@@ -75,18 +89,18 @@ export const CHART_DEFAULTS = {
       borderWidth: 1,
       titleColor: '#1a1a1a',
       bodyColor: '#57534e',
-      titleFont: { family: 'Inter' },
-      bodyFont: { family: 'Inter' },
+      titleFont: { family: CHART_FONT },
+      bodyFont: { family: CHART_FONT },
     },
   },
   scales: {
     x: {
       grid: { color: '#ece7e0', drawBorder: false },
-      ticks: { color: '#8a8580', font: { family: 'Inter', size: 11 } },
+      ticks: { color: '#8a8580', font: { family: CHART_FONT, size: 11 } },
     },
     y: {
       grid: { color: '#ece7e0', drawBorder: false },
-      ticks: { color: '#8a8580', font: { family: 'Inter', size: 11 } },
+      ticks: { color: '#8a8580', font: { family: CHART_FONT, size: 11 } },
     },
   },
 };
