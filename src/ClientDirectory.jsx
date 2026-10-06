@@ -32,38 +32,40 @@ function ClientCard({ row, isTop, logo, busy, onOpen, onPick }) {
       data-awarded={row.awardedVolume > 0 ? fmt$(row.awardedVolume) : ''}
       onClick={() => onOpen(name)}
       className={cn(
-        'contour flex cursor-pointer flex-col gap-5 rounded-[14px] border border-[color:var(--border)] bg-[var(--card)] p-5',
+        'contour flex aspect-[2/3] cursor-pointer flex-col gap-3.5 rounded-[14px] border border-[color:var(--border)] bg-[var(--card)] p-4',
         'transition-colors hover:border-[color-mix(in_srgb,var(--text)_22%,transparent)]'
       )}
     >
-      <div className="flex items-start gap-3.5">
-        <ClientLogo name={name} logo={logo} busy={busy} onPick={onPick} size={52} />
-        <div className="min-w-0 flex-1 pt-0.5">
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button" data-client-open aria-haspopup="dialog" title={name}
-              onClick={(e) => { e.stopPropagation(); onOpen(name); }}
-              className="min-w-0 appearance-none truncate border-0 bg-transparent p-0 text-left text-[15px] font-semibold text-[var(--text)] [font-family:inherit] outline-none cursor-pointer hover:text-[#c2540a] focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:hover:text-[#fb923c]"
-            >
-              {name}
-            </button>
-            {isTop && <span className="size-1.5 shrink-0 rounded-full bg-[var(--won)]" title="Top 10 client by bid volume" aria-label="Top 10 client by bid volume" />}
-          </div>
-          <div className="mt-0.5 truncate text-xs text-[var(--text-subtle)]">
-            {row.lastBidDate ? `Last Bid ${fmtDate(row.lastBidDate)}` : 'No Bids Yet'}
-          </div>
+      {/* The logo takes whatever height is left after the details below */}
+      <div className="relative min-h-0 flex-1">
+        <ClientLogo name={name} logo={logo} busy={busy} onPick={onPick} className="absolute inset-0" />
+      </div>
+
+      <div className="shrink-0">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button" data-client-open aria-haspopup="dialog" title={name}
+            onClick={(e) => { e.stopPropagation(); onOpen(name); }}
+            className="min-w-0 appearance-none truncate border-0 bg-transparent p-0 text-left text-[15px] font-semibold text-[var(--text)] [font-family:inherit] outline-none cursor-pointer hover:text-[#c2540a] focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:hover:text-[#fb923c]"
+          >
+            {name}
+          </button>
+          {isTop && <span className="size-1.5 shrink-0 rounded-full bg-[var(--won)]" title="Top 10 client by bid volume" aria-label="Top 10 client by bid volume" />}
+        </div>
+        <div className="mt-0.5 truncate text-xs text-[var(--text-subtle)]">
+          {row.lastBidDate ? `Last Bid ${fmtDate(row.lastBidDate)}` : 'No Bids Yet'}
         </div>
       </div>
 
-      <div>
-        <div className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[var(--text-subtle)]">Total Bid Volume</div>
-        <div className="mt-1 text-[26px] font-semibold leading-none tracking-tight tabular-nums">{fmt$(row.totalVolume)}</div>
+      <div className="shrink-0">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-subtle)]">Total Bid Volume</div>
+        <div className="mt-1 text-[24px] font-semibold leading-none tracking-tight tabular-nums">{fmt$(row.totalVolume)}</div>
         <div className={cn('mt-1.5 text-xs', row.awardedVolume > 0 ? cn('font-medium', green) : 'text-[var(--text-subtle)]')}>
           {row.awardedVolume > 0 ? `${fmt$(row.awardedVolume)} Awarded` : 'No Awards Yet'}
         </div>
       </div>
 
-      <dl className="mt-auto grid grid-cols-3 border-t border-[color:var(--border)] pt-3">
+      <dl className="grid shrink-0 grid-cols-3 border-t border-[color:var(--border)] pt-3">
         <MiniStat label="Bids" value={row.bidCount} />
         <MiniStat label="Won" value={row.wonCount} />
         <MiniStat label="Win Rate" value={`${row.winRate.toFixed(0)}%`} />
@@ -133,7 +135,7 @@ export default function ClientDirectory({ bids: initialBids }) {
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-[13px] text-[var(--text-subtle)]">No clients found.</div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
           {filtered.map((row) => (
             <ClientCard
               key={row.name}

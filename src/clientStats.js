@@ -80,8 +80,11 @@ export function projectStats(projects) {
 }
 
 export function initialsOf(name) {
-  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return '?';
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
+  const SKIP = new Set(['and', 'of', 'the', 'for', '&']);
+  const all = String(name || '').trim().split(/\s+/).filter(Boolean);
+  const words = all.filter((w) => !SKIP.has(w.toLowerCase()));
+  const use = words.length ? words : all;
+  if (use.length === 0) return '?';
+  if (use.length === 1) return use[0].slice(0, 2).toUpperCase();
+  return (use[0][0] + use[1][0]).toUpperCase();
 }

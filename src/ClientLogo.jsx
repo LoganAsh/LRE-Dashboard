@@ -5,22 +5,23 @@ import { ACCEPT } from './clientLogos.js';
 import { initialsOf } from './clientStats.js';
 
 // A client's logo, or their initials when there isn't one yet. When `onPick` is given, hovering shows an upload button.
-export default function ClientLogo({ name, logo, busy = false, onPick, size = 48, className }) {
+// Give it a `size` for a fixed square, or leave `size` off and position it (e.g. absolute inset-0) to fill its box.
+export default function ClientLogo({ name, logo, busy = false, onPick, size, className }) {
   const inputRef = useRef(null);
   const [broken, setBroken] = useState(false);
   const showImage = logo && !broken;
-  const dim = { width: size, height: size };
+  const dim = size ? { width: size, height: size } : undefined;
 
   return (
-    <div className={cn('group/logo relative shrink-0', className)} style={dim}>
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-[color:var(--border)] bg-[var(--card)]">
+    <div className={cn('group/logo', size && 'relative shrink-0', className)} style={dim}>
+      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-[color:var(--border)] bg-[#fdfcfa]">
         {showImage ? (
           <img
             src={logo} alt={`${name} logo`} loading="lazy" onError={() => setBroken(true)}
-            className="h-full w-full object-contain p-1.5"
+            className={cn('h-full w-full object-contain', size ? 'p-1.5' : 'p-4')}
           />
         ) : (
-          <span aria-hidden="true" className="select-none font-semibold text-[var(--text-subtle)]" style={{ fontSize: Math.round(size * 0.3) }}>
+          <span aria-hidden="true" className="select-none font-semibold text-[var(--text-subtle)]" style={{ fontSize: size ? Math.round(size * 0.3) : 38 }}>
             {initialsOf(name)}
           </span>
         )}
