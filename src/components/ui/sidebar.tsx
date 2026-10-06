@@ -144,7 +144,7 @@ export const MobileSidebar = ({
         <button
           type="button"
           aria-label="Open menu"
-          className="z-20 flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)]"
+          className="z-20 flex size-8 appearance-none items-center justify-center rounded-lg border-0 bg-transparent text-[var(--text-secondary)]"
           onClick={() => setOpen(!open)}
         >
           <Menu className="size-5" strokeWidth={1.5} />
@@ -164,7 +164,7 @@ export const MobileSidebar = ({
               <button
                 type="button"
                 aria-label="Close menu"
-                className="absolute right-6 top-6 z-50 flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)]"
+                className="absolute right-6 top-6 z-50 flex size-8 appearance-none items-center justify-center rounded-lg border-0 bg-transparent text-[var(--text-secondary)]"
                 onClick={() => setOpen(false)}
               >
                 <X className="size-5" strokeWidth={1.5} />
@@ -198,7 +198,7 @@ export const SidebarLink = ({
   const showLabels = animate ? open : true;
 
   const classes = cn(
-    "group/sidebar flex h-8 w-full items-center justify-start gap-2.5 rounded-md px-2 text-left text-[13px] font-medium outline-none transition-colors duration-150",
+    "group/sidebar flex h-8 w-full appearance-none items-center justify-start gap-2.5 rounded-md border-0 bg-transparent px-2 text-left text-[13px] font-medium [font-family:inherit] outline-none transition-colors duration-150",
     "focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
     active
       ? "font-semibold text-[var(--foreground)]"
