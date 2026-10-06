@@ -41,7 +41,7 @@ const NAV_SECTIONS = [
 
 function CountBadge({ children }) {
   return (
-    <span className="rounded-md bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] px-1.5 py-[3px] text-[10.5px] font-semibold leading-none tabular-nums text-[var(--text-secondary)]">
+    <span className="text-[11px] font-medium tabular-nums text-[#6f6a64] dark:text-[#a8a29e]">
       {children}
     </span>
   );

@@ -109,16 +109,11 @@ export const DesktopSidebar = ({
     >
       <motion.div
         className={cn(
-          "absolute inset-y-0 left-0 z-40 hidden h-full flex-col border-r border-[var(--border)] bg-[var(--surface2)] px-3 py-4 md:flex",
+          "absolute inset-y-0 left-0 z-40 hidden h-full flex-col border-r border-[var(--border)] bg-[var(--background)] px-3 py-4 md:flex",
           className
         )}
         initial={false}
-        animate={{
-          width: expanded ? FULL_WIDTH : RAIL_WIDTH,
-          boxShadow: expanded && animate
-            ? "14px 0 36px -18px rgba(20,16,8,0.28)"
-            : "0px 0px 0px 0px rgba(20,16,8,0)",
-        }}
+        animate={{ width: expanded ? FULL_WIDTH : RAIL_WIDTH }}
         transition={{ duration: 0.2, ease: "easeOut" }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -141,7 +136,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "flex h-12 w-full flex-row items-center justify-between border-b border-[var(--border)] bg-[var(--surface2)] px-4 md:hidden"
+          "flex h-12 w-full flex-row items-center justify-between border-b border-[var(--border)] bg-[var(--background)] px-4 md:hidden"
         )}
         {...props}
       >
@@ -206,8 +201,8 @@ export const SidebarLink = ({
     "group/sidebar flex h-8 w-full items-center justify-start gap-2.5 rounded-md px-2 text-left text-[13px] font-medium outline-none transition-colors duration-150",
     "focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
     active
-      ? "bg-[color-mix(in_srgb,var(--foreground)_7.5%,transparent)] text-[var(--foreground)]"
-      : "text-[var(--text-secondary)] hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] hover:text-[var(--foreground)]",
+      ? "font-semibold text-[var(--foreground)]"
+      : "text-[#6f6a64] hover:text-[var(--foreground)] dark:text-[#a8a29e] dark:hover:text-[var(--foreground)]",
     className
   );
 
