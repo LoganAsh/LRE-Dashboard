@@ -6,6 +6,7 @@ import {
 import { LOGO_B64 } from './logo.js';
 import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
+import { reloadPage } from './reload.js';
 import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './components/ui/sidebar';
 import BidDashboard from './BidDashboard.jsx';
 import BidCalendar from './BidCalendar.jsx';
@@ -40,6 +41,17 @@ const NAV_SECTIONS = [
     ],
   },
 ];
+
+const TAB_NAMES = NAV_SECTIONS.flatMap((section) => section.items.map((item) => item.tab));
+const FLASH_KEY = 'lre-sync-flash';     // the result of the last sync, shown once after the refresh
+const TAB_KEY = 'lre-return-tab';       // the tab you were on when you clicked Sync Now
+
+const store = {
+  get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* storage blocked: fine, we just lose the memory */ } },
+  del: (k) => { try { sessionStorage.removeItem(k); } catch { /* ignore */ } },
+};
+const readFlash = () => { try { return JSON.parse(store.get(FLASH_KEY) || 'null'); } catch { return null; } };
 
 function CountBadge({ children }) {
   return (
@@ -87,7 +99,7 @@ function UserFooter() {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('Bid Dashboard');
+  const [activeTab, setActiveTab] = useState(() => { const t = store.get(TAB_KEY); return TAB_NAMES.includes(t) ? t : 'Bid Dashboard'; });
   const [theme, setTheme] = useState(() => localStorage.getItem('lre-theme') || 'light');
 
   useEffect(() => {
@@ -98,7 +110,7 @@ export default function App() {
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
   const [typeFilter, setTypeFilter] = useState('All');
   const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState('');
+  const [syncNote, setSyncNote] = useState(() => readFlash());   // { text, tone: 'busy' | 'ok' | 'error' }
   const { bids, syncLog, loading, error } = useBids();
 
   // Same rule the Bid Dashboard uses for its "Upcoming Bids" list
@@ -111,25 +123,33 @@ export default function App() {
     ).length;
   }, [bids]);
 
+  useEffect(() => { store.del(FLASH_KEY); store.del(TAB_KEY); }, []);
+  useEffect(() => {
+    if (!syncNote || syncing || syncNote.tone === 'busy') return;
+    const id = setTimeout(() => setSyncNote(null), 6000);
+    return () => clearTimeout(id);
+  }, [syncNote, syncing]);
+
+  // The refresh happens every time, once the sync request has finished (success or not), so you always see current data.
   const handleSync = async () => {
+    if (syncing) return;
     setSyncing(true);
-    setSyncMsg('Syncing…');
+    setSyncNote({ text: 'Syncing…', tone: 'busy' });
+    let result;
     try {
       const resp = await fetch(SYNC_FUNCTION_URL, { method: 'POST' });
       const json = await resp.json();
-      if (json.success) {
-        setSyncMsg(`Synced ${json.rows_upserted} rows — refreshing…`);
-        window.location.reload();
-        return;
-      } else {
-        setSyncMsg(`Error: ${json.error}`);
-      }
+      result = json.success
+        ? { tone: 'ok', text: `Synced ${json.rows_upserted} Rows` }
+        : { tone: 'error', text: `Sync Error: ${json.error}` };
     } catch (e) {
-      setSyncMsg(`Failed: ${e.message}`);
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setSyncMsg(''), 5000);
+      result = { tone: 'error', text: `Sync Failed: ${e.message}` };
     }
+    store.set(FLASH_KEY, JSON.stringify(result));   // the page is about to reload, so keep the message for after
+    store.set(TAB_KEY, activeTab);                  // and stay on the same tab
+    setSyncNote({ text: `${result.text} · Refreshing…`, tone: result.tone });
+    reloadPage();
+    setTimeout(() => setSyncing(false), 10000);     // only matters if the browser refuses to reload
   };
 
   const lastSync = syncLog
@@ -171,7 +191,7 @@ export default function App() {
           <div className="topbar-title">{activeTab}</div>
           <div className="topbar-actions">
             {lastSync && <span style={{ fontSize: 11, color: 'var(--muted)' }}>Last Sync: {lastSync}</span>}
-            {syncMsg && <span style={{ fontSize: 11, color: syncing ? 'var(--accent-text)' : 'var(--won)' }}>{syncMsg}</span>}
+            {syncNote && <span role="status" style={{ fontSize: 11, color: syncNote.tone === 'error' ? 'var(--lost)' : syncNote.tone === 'ok' ? 'var(--won)' : 'var(--accent-text)' }}>{syncNote.text}</span>}
             <button className="theme-toggle" onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme">
               <span className="theme-toggle-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
               {theme === 'dark' ? 'Light' : 'Dark'}
