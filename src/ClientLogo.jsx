@@ -14,11 +14,11 @@ export default function ClientLogo({ name, logo, busy = false, onPick, size, cla
 
   return (
     <div className={cn('group/logo', size && 'relative shrink-0', className)} style={dim}>
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-[color:var(--border)] bg-[#fdfcfa]">
+      <div className={cn('flex h-full w-full items-center justify-center overflow-hidden rounded-xl', !showImage && 'border border-[color:var(--border)]')}>
         {showImage ? (
           <img
             src={logo} alt={`${name} logo`} loading="lazy" onError={() => setBroken(true)}
-            className={cn('h-full w-full object-contain', size ? 'p-1.5' : 'p-4')}
+            className={cn('h-full w-full object-contain', size ? 'p-0.5' : 'p-1')}
           />
         ) : (
           <span aria-hidden="true" className="select-none font-semibold text-[var(--text-subtle)]" style={{ fontSize: size ? Math.round(size * 0.3) : 38 }}>
