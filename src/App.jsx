@@ -51,6 +51,9 @@ const store = {
   set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* storage blocked: fine, we just lose the memory */ } },
   del: (k) => { try { sessionStorage.removeItem(k); } catch { /* ignore */ } },
 };
+// Browsers word a dropped or blocked request differently: "Failed to fetch" (Chrome), "Load failed" (Safari),
+// "NetworkError when attempting to fetch resource" (Firefox). A manual sync treats these as quiet.
+const isNetworkDrop = (e) => /failed to fetch|load failed|networkerror|network request failed/i.test(String((e && e.message) || ''));
 const readFlash = () => { try { return JSON.parse(store.get(FLASH_KEY) || 'null'); } catch { return null; } };
 
 function CountBadge({ children }) {
@@ -143,13 +146,17 @@ export default function App() {
         ? { tone: 'ok', text: `Synced ${json.rows_upserted} Rows` }
         : { tone: 'error', text: `Sync Error: ${json.error}` };
     } catch (e) {
-      result = { tone: 'error', text: `Sync Failed: ${e.message}` };
+      // A dropped/blocked request shows no error message; the refresh below loads whatever is current.
+      result = isNetworkDrop(e) ? { tone: 'quiet' } : { tone: 'error', text: `Sync Failed: ${e.message}` };
     }
-    store.set(FLASH_KEY, JSON.stringify(result));   // the page is about to reload, so keep the message for after
-    store.set(TAB_KEY, activeTab);                  // and stay on the same tab
-    setSyncNote({ text: `${result.text} · Refreshing…`, tone: result.tone });
+    if (result.tone === 'quiet') store.del(FLASH_KEY);                   // nothing to show after the refresh
+    else store.set(FLASH_KEY, JSON.stringify(result));                   // the page is about to reload, so keep the message for after
+    store.set(TAB_KEY, activeTab);                                       // and stay on the same tab
+    setSyncNote(result.tone === 'quiet'
+      ? { text: 'Refreshing…', tone: 'busy' }
+      : { text: `${result.text} · Refreshing…`, tone: result.tone });
     reloadPage();
-    setTimeout(() => setSyncing(false), 10000);     // only matters if the browser refuses to reload
+    setTimeout(() => { setSyncing(false); setSyncNote(null); }, 10000);     // only matters if the browser refuses to reload
   };
 
   const lastSync = syncLog
