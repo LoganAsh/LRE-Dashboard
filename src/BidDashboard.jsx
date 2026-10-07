@@ -8,7 +8,7 @@ import { Card, CardStatSparkline } from './components/ui/card';
 import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 import { StatusModal } from './StatusModal.jsx';
 import { MS_DAY, startOfToday, dateOf, daysUntil, dateAtTime, parseTime, fmtDate } from './dates.js';
-import { useBillingProjects, billingDates, billingLabel } from './projectBilling.js';
+import { useBillingProjects, nextBillingDate, billingLabel } from './projectBilling.js';
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
 
@@ -244,8 +244,7 @@ function PreBidTimeline({ preBids, onOpen }) {
 /* ── upcoming billings ────────────────────────────────────────────────────── */
 
 const BILLING_COLOR = '#0f766e';     // the same teal the Calendar uses for billing dates
-const BILLING_DAYS = 60;             // how far ahead to look
-const BILLING_ROWS = 8;              // how many to list before pointing to the Calendar
+const BILLING_ROWS = 8;              // how many projects to list before pointing to the Calendar
 
 function BillingTimeline({ items, onOpenProject }) {
   const today = startOfToday();
@@ -258,7 +257,7 @@ function BillingTimeline({ items, onOpenProject }) {
             <span className="absolute -left-[26px] top-[5px] size-2 rounded-full ring-4 ring-[var(--card)]" style={{ background: BILLING_COLOR }} aria-hidden="true" />
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
-                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {date.toLocaleDateString('en-US', date.getFullYear() === today.getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
               <span className="whitespace-nowrap text-xs tabular-nums text-[var(--text-secondary)]">{countdown(days)}</span>
             </div>
@@ -295,12 +294,12 @@ export default function BidDashboard({ bids: initialBids, onNavigate }) {
   const upcomingPreBids = useMemo(() => getUpcomingPreBids(bids), [bids]);
 
   const { projects: billingProjects } = useBillingProjects();
+  // One row per project: its next billing date (Complete projects, and projects with no billing day, have none).
   const upcomingBillings = useMemo(() => {
-    const from = startOfToday();
-    const to = new Date(from);
-    to.setDate(to.getDate() + BILLING_DAYS);
+    const today = startOfToday();
     return billingProjects
-      .flatMap((p) => billingDates(p, from, to).map((date) => ({ project: p, date })))
+      .map((p) => ({ project: p, date: nextBillingDate(p, today) }))
+      .filter((x) => x.date)
       .sort((a, b) => a.date - b.date || a.project.name.localeCompare(b.project.name));
   }, [billingProjects]);
   const goTo = (tab) => { if (onNavigate) onNavigate(tab); };
@@ -407,7 +406,7 @@ export default function BidDashboard({ bids: initialBids, onNavigate }) {
               <div className="py-10 text-center text-[13px] text-[var(--text-subtle)]">No Upcoming Billings</div>
             ) : (
               <>
-                <div className="-mt-1.5 mb-3 text-[11px] text-[var(--text-subtle)]">Next {BILLING_DAYS} Days</div>
+                <div className="-mt-1.5 mb-3 text-[11px] text-[var(--text-subtle)]">Next Billing for Each Project</div>
                 <BillingTimeline items={upcomingBillings.slice(0, BILLING_ROWS)} onOpenProject={() => goTo('Projects')} />
                 {upcomingBillings.length > BILLING_ROWS && (
                   <button type="button" onClick={() => goTo('Calendar')} className="mt-4 appearance-none border-0 bg-transparent p-0 text-xs font-medium text-[#c2540a] [font-family:inherit] outline-none cursor-pointer hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:text-[#fb923c]">
