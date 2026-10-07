@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
+import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { moveProject } from './projectOrder.js';
 import { useProjectTasks, summarize } from './projectTasks.js';
 import TaskPanel, { TaskSummary } from './TaskPanel.jsx';
 import { billingLabel, nextBillingDate, fmtBillingDate, ordinal } from './projectBilling.js';
@@ -284,7 +286,10 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
 }
 
 // ── Project Card ──────────────────────────────────────────────────────────────
-function ProjectCard({ project, wonBids, taskStats, tasksApi, onEdit, onDeleted }) {
+function ProjectCard({ project, wonBids, taskStats, tasksApi, onEdit, onDeleted, position, count, onMoveStep, dragId, dropAt, setDragId, setDropAt, onReorder }) {
+  const cardRef = useRef(null);
+  const dropWhere = dropAt && dropAt.id === project.id ? dropAt.where : null;      // 'before' | 'after' | null
+  const whereFromMouse = (e) => { const r = e.currentTarget.getBoundingClientRect(); return e.clientY < r.top + r.height / 2 ? 'before' : 'after'; };
   const [showSov, setShowSov] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const [tasksMounted, setTasksMounted] = useState(false);      // the panel is built the first time it opens, then kept so it remembers its view
@@ -327,9 +332,47 @@ function ProjectCard({ project, wonBids, taskStats, tasksApi, onEdit, onDeleted 
   return (
     <>
       {showSov && <SovEditor projectId={project.id} originalContract={revised} onClose={() => setShowSov(false)} />}
-      <div className="contour" style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden' }}>
+      <div
+        ref={cardRef} className="contour" data-project-id={project.id}
+        onDragOver={(e) => {
+          if (dragId == null || dragId === project.id) return;
+          e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+          const where = whereFromMouse(e);
+          if (!dropAt || dropAt.id !== project.id || dropAt.where !== where) setDropAt({ id: project.id, where });
+        }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropAt((prev) => (prev && prev.id === project.id ? null : prev)); }}
+        onDrop={(e) => {
+          if (dragId == null) return;
+          e.preventDefault();
+          const from = dragId, where = whereFromMouse(e);
+          setDropAt(null); setDragId(null);
+          if (from !== project.id) onReorder(from, project.id, where);
+        }}
+        style={{
+          background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden',
+          opacity: dragId === project.id ? 0.45 : 1, transition:'opacity 0.15s',
+          boxShadow: dropWhere === 'before' ? 'inset 0 3px 0 0 #ea580c' : dropWhere === 'after' ? 'inset 0 -3px 0 0 #ea580c' : 'none',
+        }}
+      >
         {/* Header */}
         <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:10 }}>
+          <button
+            type="button" draggable data-reorder-handle={project.id} title="Drag to reorder"
+            aria-label={`Reorder ${project.name}. Drag it, or press the up or down arrow key.`}
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/plain', String(project.id)); e.dataTransfer.effectAllowed = 'move';
+              if (cardRef.current && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(cardRef.current, 24, 24);
+              setDragId(project.id);
+            }}
+            onDragEnd={() => { setDragId(null); setDropAt(null); }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp') { e.preventDefault(); onMoveStep(project.id, -1, 'handle'); }
+              else if (e.key === 'ArrowDown') { e.preventDefault(); onMoveStep(project.id, 1, 'handle'); }
+            }}
+            style={{ flexShrink:0, background:'none', border:'none', padding:'2px 0', margin:'0 -4px 0 -6px', color:'var(--muted)', cursor: dragId === project.id ? 'grabbing' : 'grab', display:'inline-flex', alignItems:'center', touchAction:'none' }}
+          >
+            <GripVertical size={18} strokeWidth={1.75} aria-hidden="true" />
+          </button>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:4 }}>
               <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:16 }}>{project.name}</span>
@@ -343,6 +386,12 @@ function ProjectCard({ project, wonBids, taskStats, tasksApi, onEdit, onDeleted 
             </div>
           </div>
           <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+            <button type="button" data-move-up={project.id} onClick={() => onMoveStep(project.id, -1, 'up')} disabled={position === 0}
+              aria-label={`Move up: ${project.name}`} title="Move up"
+              style={{ padding:'4px 6px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:4, color:'var(--muted)', display:'inline-flex', alignItems:'center', cursor:position === 0 ? 'default' : 'pointer', opacity:position === 0 ? 0.35 : 1 }}><ChevronUp size={14} strokeWidth={1.75} aria-hidden="true" /></button>
+            <button type="button" data-move-down={project.id} onClick={() => onMoveStep(project.id, 1, 'down')} disabled={position === count - 1}
+              aria-label={`Move down: ${project.name}`} title="Move down"
+              style={{ padding:'4px 6px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:4, color:'var(--muted)', display:'inline-flex', alignItems:'center', cursor:position === count - 1 ? 'default' : 'pointer', opacity:position === count - 1 ? 0.35 : 1 }}><ChevronDown size={14} strokeWidth={1.75} aria-hidden="true" /></button>
             <button onClick={() => onEdit(project)}
               onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent)'; e.currentTarget.style.color='var(--accent)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--muted)'; }}
@@ -408,13 +457,18 @@ export default function Projects({ bids }) {
   const [modal, setModal] = useState(null);
   const [statusFilter, setStatusFilter] = useState('All');
   const tasksApi = useProjectTasks();
+  const [dragId, setDragId] = useState(null);
+  const [dropAt, setDropAt] = useState(null);          // { id, where } while dragging over a card
+  const [orderNote, setOrderNote] = useState('');      // read out for screen readers
+  const [orderError, setOrderError] = useState('');
+  const focusAfterMove = useRef(null);
 
   const wonBids = (bids || [])
     .filter(b => (b.effective_status || b.status) === 'Won')
     .sort((a, b) => (b.bid_date||'').localeCompare(a.bid_date||''));
 
   const fetchProjects = useCallback(async () => {
-    const { data } = await supabase.from('lre_projects').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('lre_projects').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
     setProjects(data || []);
     setLoading(false);
   }, []);
@@ -434,6 +488,33 @@ export default function Projects({ bids }) {
   );
 
   const filtered = statusFilter === 'All' ? projects : projects.filter(p => p.status === statusFilter);
+
+  // Moving a project changes only its own place; the new order is saved in one step, and undone if saving fails.
+  const reorder = async (id, targetId, where) => {
+    const next = moveProject(projects, id, targetId, where);
+    if (next === projects) return;
+    const before = projects;
+    setProjects(next);
+    setOrderError('');
+    setOrderNote(`Moved ${next.find(p => p.id === id).name} to position ${next.findIndex(p => p.id === id) + 1} of ${next.length}`);
+    const { error } = await supabase.rpc('lre_reorder_projects', { ids: next.map(p => p.id) });
+    if (error) { setProjects(before); setOrderNote(''); setOrderError(`Couldn't save the new order: ${error.message}`); }
+  };
+  const moveStep = (id, delta, from) => {
+    const i = filtered.findIndex(p => p.id === id);
+    const target = filtered[i + delta];
+    if (!target) return;
+    focusAfterMove.current = { id, from };
+    reorder(id, target.id, delta > 0 ? 'after' : 'before');
+  };
+  useLayoutEffect(() => {                                  // keep keyboard focus on the control you were using
+    const f = focusAfterMove.current;
+    if (!f) return;
+    focusAfterMove.current = null;
+    const own = f.from === 'handle' ? null : document.querySelector(`[data-move-${f.from}="${f.id}"]`);
+    const el = own && !own.disabled ? own : document.querySelector(`[data-reorder-handle="${f.id}"]`);
+    if (el) el.focus();
+  }, [projects]);
 
   const activeRevised = projects
     .filter(p => ['Mobilizing','Active','Punch List'].includes(p.status))
@@ -470,6 +551,15 @@ export default function Projects({ bids }) {
         </div>
       </div>
 
+      <div role="status" aria-live="polite" className="sr-only">{orderNote}</div>
+      {orderError && (
+        <div role="alert" style={{ marginBottom:12, padding:'8px 12px', border:'1px solid var(--lost)', borderRadius:8, color:'var(--lost)', fontSize:12, display:'flex', justifyContent:'space-between', gap:12 }}>
+          <span>{orderError}</span>
+          <button type="button" onClick={() => setOrderError('')} aria-label="Dismiss message" style={{ background:'none', border:'none', color:'inherit', cursor:'pointer', padding:0 }}>✕</button>
+        </div>
+      )}
+      {!loading && filtered.length > 1 && <div style={{ fontSize:11, color:'var(--muted)', marginBottom:10 }}>Drag the grip, or use the arrows, to put your projects in the order you want.</div>}
+
       {loading ? (
         <div className="loading"><div className="spinner" />Loading projects…</div>
       ) : filtered.length === 0 ? (
@@ -481,7 +571,7 @@ export default function Projects({ bids }) {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          {filtered.map(p => <ProjectCard key={p.id} project={p} wonBids={wonBids} taskStats={statsByProject[p.id] || summarize([], p.id)} tasksApi={tasksApi} onEdit={setModal} onDeleted={handleDeleted} />)}
+          {filtered.map((p, i) => <ProjectCard key={p.id} project={p} wonBids={wonBids} taskStats={statsByProject[p.id] || summarize([], p.id)} tasksApi={tasksApi} position={i} count={filtered.length} onMoveStep={moveStep} dragId={dragId} dropAt={dropAt} setDragId={setDragId} setDropAt={setDropAt} onReorder={reorder} onEdit={setModal} onDeleted={handleDeleted} />)}
         </div>
       )}
     </div>

@@ -559,7 +559,7 @@ export default function WeeklySchedule() {
 
   const reload = useCallback(async () => {
     const [{ data: proj }, { data: crew }, { data: equip }] = await Promise.all([
-      supabase.from('lre_projects').select('id,name,foreman,status').order('created_at',{ascending:false}),
+      supabase.from('lre_projects').select('id,name,foreman,status').order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false}),
       supabase.from('lre_crew').select('*').eq('active',true).order('name'),
       supabase.from('lre_equipment').select('*').eq('active',true).order('name'),
     ]);
