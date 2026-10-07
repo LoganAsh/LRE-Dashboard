@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useProjectTasks, summarize } from './projectTasks.js';
+import TaskWindow, { TaskSummary } from './TaskWindow.jsx';
 import { supabase } from './supabase.js';
 import { fmtFull$, fmt$ } from './utils.js';
 
@@ -276,7 +278,7 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
 }
 
 // ── Project Card ──────────────────────────────────────────────────────────────
-function ProjectCard({ project, wonBids, onEdit, onDeleted }) {
+function ProjectCard({ project, wonBids, taskStats, onOpenTasks, onEdit, onDeleted }) {
   const [showSov, setShowSov] = useState(false);
   const [sovSummary, setSovSummary] = useState(null);
 
@@ -366,6 +368,9 @@ function ProjectCard({ project, wonBids, onEdit, onDeleted }) {
           <ProgressBar value={burnPct} color={burnPct > 100 ? 'var(--lost)' : burnPct > 85 ? '#f97316' : 'var(--accent)'} />
         </div>
 
+        {/* Tasks */}
+        <TaskSummary stats={taskStats} onOpen={() => onOpenTasks(project)} />
+
         {/* Footer */}
         <div style={{ padding:'12px 18px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10 }}>
           <div style={{ display:'flex', gap:14, flexWrap:'wrap', fontSize:11, color:'var(--muted)' }}>
@@ -392,6 +397,8 @@ export default function Projects({ bids }) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [statusFilter, setStatusFilter] = useState('All');
+  const tasksApi = useProjectTasks();
+  const [taskProject, setTaskProject] = useState(null);
 
   const wonBids = (bids || [])
     .filter(b => (b.effective_status || b.status) === 'Won')
@@ -412,6 +419,11 @@ export default function Projects({ bids }) {
 
   const handleDeleted = (id) => setProjects(prev => prev.filter(p => p.id !== id));
 
+  const statsByProject = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.id, summarize(tasksApi.tasks, p.id)])),
+    [projects, tasksApi.tasks]
+  );
+
   const filtered = statusFilter === 'All' ? projects : projects.filter(p => p.status === statusFilter);
 
   const activeRevised = projects
@@ -424,6 +436,8 @@ export default function Projects({ bids }) {
       {(modal === 'new' || (modal && modal.id)) && (
         <ProjectModal project={modal === 'new' ? null : modal} wonBids={wonBids} onClose={() => setModal(null)} onSave={handleSave} />
       )}
+
+      {taskProject && <TaskWindow project={taskProject} api={tasksApi} onClose={() => setTaskProject(null)} />}
 
       {/* KPIs */}
       <div className="kpi-grid" style={{ marginBottom: 24 }}>
@@ -460,7 +474,7 @@ export default function Projects({ bids }) {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          {filtered.map(p => <ProjectCard key={p.id} project={p} wonBids={wonBids} onEdit={setModal} onDeleted={handleDeleted} />)}
+          {filtered.map(p => <ProjectCard key={p.id} project={p} wonBids={wonBids} taskStats={statsByProject[p.id] || summarize([], p.id)} onOpenTasks={setTaskProject} onEdit={setModal} onDeleted={handleDeleted} />)}
         </div>
       )}
     </div>
