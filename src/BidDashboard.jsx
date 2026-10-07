@@ -8,6 +8,7 @@ import { Card, CardStatSparkline } from './components/ui/card';
 import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 import { StatusModal } from './StatusModal.jsx';
 import { MS_DAY, startOfToday, dateOf, daysUntil, dateAtTime, parseTime, fmtDate } from './dates.js';
+import { useBillingProjects, billingDates, billingLabel } from './projectBilling.js';
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
 
@@ -240,9 +241,46 @@ function PreBidTimeline({ preBids, onOpen }) {
   );
 }
 
+/* ── upcoming billings ────────────────────────────────────────────────────── */
+
+const BILLING_COLOR = '#0f766e';     // the same teal the Calendar uses for billing dates
+const BILLING_DAYS = 60;             // how far ahead to look
+const BILLING_ROWS = 8;              // how many to list before pointing to the Calendar
+
+function BillingTimeline({ items, onOpenProject }) {
+  const today = startOfToday();
+  return (
+    <ol aria-label="Upcoming billing dates" className="relative ml-1 border-l border-[color:var(--border)] pl-5">
+      {items.map(({ project, date }) => {
+        const days = Math.round((date - today) / MS_DAY);
+        return (
+          <li key={`${project.id}-${date.getTime()}`} className="relative pb-5 last:pb-0">
+            <span className="absolute -left-[26px] top-[5px] size-2 rounded-full ring-4 ring-[var(--card)]" style={{ background: BILLING_COLOR }} aria-hidden="true" />
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+              <span className="whitespace-nowrap text-xs tabular-nums text-[var(--text-secondary)]">{countdown(days)}</span>
+            </div>
+            <button
+              type="button" onClick={onOpenProject} title={`Open Projects: ${project.name}`}
+              className="mt-0.5 block max-w-full appearance-none truncate border-0 bg-transparent p-0 text-left text-[14px] font-semibold text-[var(--text)] [font-family:inherit] outline-none cursor-pointer hover:text-[#c2540a] focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:hover:text-[#fb923c]"
+            >
+              {project.name}
+            </button>
+            <div className="mt-0.5 truncate text-xs text-[var(--text-subtle)]">
+              {[project.client, billingLabel(project.billing_day)].filter(Boolean).join(' · ')}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /* ── page ─────────────────────────────────────────────────────────────────── */
 
-export default function BidDashboard({ bids: initialBids }) {
+export default function BidDashboard({ bids: initialBids, onNavigate }) {
   const [bids, setBids] = useState(initialBids);
   const [showNotBidding, setShowNotBidding] = useState(false);
   const [modalBid, setModalBid] = useState(null);
@@ -255,6 +293,17 @@ export default function BidDashboard({ bids: initialBids }) {
 
   const upcomingBids = useMemo(() => getUpcomingBids(bids), [bids]);
   const upcomingPreBids = useMemo(() => getUpcomingPreBids(bids), [bids]);
+
+  const { projects: billingProjects } = useBillingProjects();
+  const upcomingBillings = useMemo(() => {
+    const from = startOfToday();
+    const to = new Date(from);
+    to.setDate(to.getDate() + BILLING_DAYS);
+    return billingProjects
+      .flatMap((p) => billingDates(p, from, to).map((date) => ({ project: p, date })))
+      .sort((a, b) => a.date - b.date || a.project.name.localeCompare(b.project.name));
+  }, [billingProjects]);
+  const goTo = (tab) => { if (onNavigate) onNavigate(tab); };
 
   const notBiddingBids = useMemo(() =>
     bids
@@ -337,12 +386,38 @@ export default function BidDashboard({ bids: initialBids }) {
           )}
         </Card>
 
-        <Card className="p-5">
-          <SectionHeading title="Upcoming Pre-Bids" count={upcomingPreBids.length} />
-          {upcomingPreBids.length === 0
-            ? <div className="py-10 text-center text-[13px] text-[var(--text-subtle)]">No Upcoming Pre-Bids</div>
-            : <PreBidTimeline preBids={upcomingPreBids} onOpen={setModalBid} />}
-        </Card>
+        {/* Right column: pre-bids, with billings directly underneath */}
+        <div className="flex flex-col gap-4">
+          <Card className="p-5">
+            <SectionHeading title="Upcoming Pre-Bids" count={upcomingPreBids.length} />
+            {upcomingPreBids.length === 0
+              ? <div className="py-10 text-center text-[13px] text-[var(--text-subtle)]">No Upcoming Pre-Bids</div>
+              : <PreBidTimeline preBids={upcomingPreBids} onOpen={setModalBid} />}
+          </Card>
+
+          <Card className="p-5" data-billings-box>
+            <SectionHeading title="Upcoming Billings" count={upcomingBillings.length} />
+            {billingProjects.length === 0 ? (
+              <div className="py-8 text-center">
+                <div className="text-[13px] text-[var(--text-subtle)]">No Billing Dates Set</div>
+                <div className="mx-auto mt-1 max-w-[240px] text-xs leading-relaxed text-[var(--text-subtle)]">Set a monthly billing date on a project and it will show up here.</div>
+                <button type="button" onClick={() => goTo('Projects')} className="mt-3 appearance-none border-0 bg-transparent p-0 text-xs font-medium text-[#c2540a] [font-family:inherit] outline-none cursor-pointer hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:text-[#fb923c]">Open Projects</button>
+              </div>
+            ) : upcomingBillings.length === 0 ? (
+              <div className="py-10 text-center text-[13px] text-[var(--text-subtle)]">No Upcoming Billings</div>
+            ) : (
+              <>
+                <div className="-mt-1.5 mb-3 text-[11px] text-[var(--text-subtle)]">Next {BILLING_DAYS} Days</div>
+                <BillingTimeline items={upcomingBillings.slice(0, BILLING_ROWS)} onOpenProject={() => goTo('Projects')} />
+                {upcomingBillings.length > BILLING_ROWS && (
+                  <button type="button" onClick={() => goTo('Calendar')} className="mt-4 appearance-none border-0 bg-transparent p-0 text-xs font-medium text-[#c2540a] [font-family:inherit] outline-none cursor-pointer hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:text-[#fb923c]">
+                    View All on Calendar ({upcomingBillings.length - BILLING_ROWS} More)
+                  </button>
+                )}
+              </>
+            )}
+          </Card>
+        </div>
       </div>
 
       {/* Not Bidding */}

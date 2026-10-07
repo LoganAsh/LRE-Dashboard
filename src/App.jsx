@@ -215,7 +215,7 @@ export default function App() {
           <div className="loading" style={{ color: 'var(--lost)' }}>Error Loading Data: {error}</div>
         ) : (
           <>
-            {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}
+            {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} onNavigate={setActiveTab} />}
             {activeTab === 'Calendar' && <BidCalendar bids={bids} onNavigate={setActiveTab} />}
             {activeTab === 'Projects' && <Projects bids={bids} />}
             {activeTab === 'Weekly Schedule' && <WeeklySchedule />}
