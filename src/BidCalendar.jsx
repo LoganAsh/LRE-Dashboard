@@ -1,20 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EventCalendar } from './components/ui/event-calendar';
 import { StatusModal } from './StatusModal.jsx';
 import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 import { parseClients } from './hooks.js';
 import { fmtFull$ } from './utils.js';
+import { useBillingProjects, billingDates, billingLabel } from './projectBilling.js';
 
-const COLORS = { bid: '#f97316', prebid: '#7c6cf0', overdue: '#dc2626' };
+const COLORS = { bid: '#f97316', prebid: '#7c6cf0', overdue: '#dc2626', billing: '#0f766e' };
 
 const KINDS = [
   { value: 'bid', label: 'Bids', color: COLORS.bid },
   { value: 'prebid', label: 'Pre-Bids', color: COLORS.prebid },
+  { value: 'billing', label: 'Billing', color: COLORS.billing, showCount: false },
 ];
 const LEGEND = [
   { label: 'Bid Due', color: COLORS.bid },
   { label: 'Pre-Bid', color: COLORS.prebid },
   { label: 'Past Due', color: COLORS.overdue },
+  { label: 'Billing Date', color: COLORS.billing },
 ];
 
 // "2:00 PM" -> { h: 14, min: 0 }; anything unreadable -> null (event shows in the "no time" lane)
@@ -74,12 +77,29 @@ function buildEvents(bids) {
   return out;
 }
 
-export default function BidCalendar({ bids }) {
+// Monthly billing dates for the period being shown, from each project's billing day (stops once a project is Complete)
+function billingEventsBetween(projects, from, to) {
+  const out = [];
+  projects.forEach((p) => {
+    billingDates(p, from, to).forEach((d) => {
+      out.push({
+        id: `billing-${p.id}-${d.getFullYear()}-${d.getMonth() + 1}`, ref: p.id, kind: 'billing', kindLabel: 'Billing Date',
+        title: `Billing: ${p.name}`, start: d, hasTime: false, color: COLORS.billing,
+        details: [p.client || null, `Monthly Billing · ${billingLabel(p.billing_day)}`].filter(Boolean),
+      });
+    });
+  });
+  return out;
+}
+
+export default function BidCalendar({ bids, onNavigate }) {
   const [localBids, setLocalBids] = useState(bids);
   const [modalBid, setModalBid] = useState(null);
   useEffect(() => { setLocalBids(bids); }, [bids]);
 
   const events = useMemo(() => buildEvents(localBids), [localBids]);
+  const { projects } = useBillingProjects();
+  const dynamicEvents = useCallback((from, to) => billingEventsBetween(projects, from, to), [projects]);
 
   return (
     <div className="page">
@@ -87,7 +107,11 @@ export default function BidCalendar({ bids }) {
         events={events}
         kinds={KINDS}
         legend={LEGEND}
-        onEventClick={(ev) => setModalBid(localBids.find((b) => b.id === ev.ref) || null)}
+        dynamicEvents={dynamicEvents}
+        onEventClick={(ev) => {
+          if (ev.kind === 'billing') { if (onNavigate) onNavigate('Projects'); return; }   // billing dates belong to a project
+          setModalBid(localBids.find((b) => b.id === ev.ref) || null);
+        }}
       />
       {modalBid && (
         <StatusModal

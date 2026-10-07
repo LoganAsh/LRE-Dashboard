@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useProjectTasks, summarize } from './projectTasks.js';
-import TaskWindow, { TaskSummary } from './TaskWindow.jsx';
+import TaskPanel, { TaskSummary } from './TaskPanel.jsx';
+import { billingLabel, nextBillingDate, fmtBillingDate, ordinal } from './projectBilling.js';
+import { startOfToday } from './dates.js';
 import { supabase } from './supabase.js';
 import { fmtFull$, fmt$ } from './utils.js';
 
@@ -27,14 +29,6 @@ const field = {
 };
 
 function pct(part, total) { return total > 0 ? Math.min(100, (part / total) * 100) : 0; }
-
-function ProgressBar({ value, color }) {
-  return (
-    <div style={{ height: 6, background: 'var(--surface2)', borderRadius: 3, overflow: 'hidden' }}>
-      <div style={{ width: `${Math.min(value, 100)}%`, height: '100%', background: color || 'var(--accent)', borderRadius: 3, transition: 'width 0.4s ease' }} />
-    </div>
-  );
-}
 
 function StatusPill({ status }) {
   const s = STATUS_COLORS[status] || STATUS_COLORS['Not Started'];
@@ -168,6 +162,7 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
     crew_size: project?.crew_size || '',
     start_date: project?.start_date || '',
     est_completion_date: project?.est_completion_date || '',
+    billing_day: project?.billing_day || '',
     actual_completion_date: project?.actual_completion_date || '',
     original_contract: project?.original_contract || '',
     approved_cos: project?.approved_cos || 0,
@@ -191,7 +186,7 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
   const handleSave = async () => {
     if (!form.name.trim()) { setError('Project name is required'); return; }
     setSaving(true); setError('');
-    const payload = { ...form, bid_id: form.bid_id || null, crew_size: parseInt(form.crew_size) || null, original_contract: parseFloat(form.original_contract) || 0, approved_cos: parseFloat(form.approved_cos) || 0, actual_cost: parseFloat(form.actual_cost) || 0, start_date: form.start_date || null, est_completion_date: form.est_completion_date || null, actual_completion_date: form.actual_completion_date || null };
+    const payload = { ...form, bid_id: form.bid_id || null, crew_size: parseInt(form.crew_size) || null, original_contract: parseFloat(form.original_contract) || 0, approved_cos: parseFloat(form.approved_cos) || 0, actual_cost: parseFloat(form.actual_cost) || 0, start_date: form.start_date || null, est_completion_date: form.est_completion_date || null, actual_completion_date: form.actual_completion_date || null, billing_day: form.billing_day ? parseInt(form.billing_day) : null };
     const result = isNew
       ? await supabase.from('lre_projects').insert(payload).select().single()
       : await supabase.from('lre_projects').update(payload).eq('id', project.id).select().single();
@@ -256,6 +251,17 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
             <div><Label>Actual Completion</Label><input type="date" value={form.actual_completion_date} onChange={e => set('actual_completion_date',e.target.value)} style={{ ...field, colorScheme:'dark' }} /></div>
           </div>
 
+          <Section title="Billing" />
+          <div style={{ marginBottom:16 }}>
+            <Label>Monthly Billing Date</Label>
+            <select value={form.billing_day} onChange={e => set('billing_day', e.target.value)} style={field}>
+              <option value="">Not Set</option>
+              {Array.from({ length: 30 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{ordinal(d)} of the Month</option>)}
+              <option value="31">Last Day of the Month</option>
+            </select>
+            <div style={{ fontSize:11, color:'var(--muted)', marginTop:5, lineHeight:1.5 }}>Shows on the Calendar every month until the project is marked Complete. Months with fewer days use their last day.</div>
+          </div>
+
           <Section title="Financials" />
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:16 }}>
             <div><Label>Original Contract</Label><input type="number" value={form.original_contract} onChange={e => set('original_contract',e.target.value)} style={field} /></div>
@@ -278,8 +284,13 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
 }
 
 // ── Project Card ──────────────────────────────────────────────────────────────
-function ProjectCard({ project, wonBids, taskStats, onOpenTasks, onEdit, onDeleted }) {
+function ProjectCard({ project, wonBids, taskStats, tasksApi, onEdit, onDeleted }) {
   const [showSov, setShowSov] = useState(false);
+  const [tasksOpen, setTasksOpen] = useState(false);
+  const [tasksMounted, setTasksMounted] = useState(false);      // the panel is built the first time it opens, then kept so it remembers its view
+  const toggleTasks = () => { setTasksMounted(true); setTasksOpen((o) => !o); };
+  const tasksPanelId = `tasks-panel-${project.id}`;
+  const nextBill = nextBillingDate(project, startOfToday());
   const [sovSummary, setSovSummary] = useState(null);
 
   const revised = (project.original_contract || 0) + (project.approved_cos || 0);
@@ -359,23 +370,22 @@ function ProjectCard({ project, wonBids, taskStats, onOpenTasks, onEdit, onDelet
           ))}
         </div>
 
-        {/* Burn rate */}
-        <div style={{ padding:'10px 18px', borderBottom:'1px solid var(--border)' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-            <span style={{ fontSize:10, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Cost Burn Rate</span>
-            <span style={{ fontSize:11, fontWeight:600, color: burnPct > 100 ? 'var(--lost)' : burnPct > 85 ? '#f97316' : 'var(--text)' }}>{burnPct.toFixed(1)}%</span>
-          </div>
-          <ProgressBar value={burnPct} color={burnPct > 100 ? 'var(--lost)' : burnPct > 85 ? '#f97316' : 'var(--accent)'} />
-        </div>
-
         {/* Tasks */}
-        <TaskSummary stats={taskStats} onOpen={() => onOpenTasks(project)} />
+        <TaskSummary stats={taskStats} open={tasksOpen} onToggle={toggleTasks} controlsId={tasksPanelId} />
+        <div
+          id={tasksPanelId} aria-hidden={!tasksOpen} {...(tasksOpen ? {} : { inert: '' })}
+          className="grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
+          style={{ gridTemplateRows: tasksOpen ? '1fr' : '0fr' }}
+        >
+          <div className="min-h-0 overflow-hidden">{tasksMounted && <TaskPanel project={project} api={tasksApi} />}</div>
+        </div>
 
         {/* Footer */}
         <div style={{ padding:'12px 18px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10 }}>
           <div style={{ display:'flex', gap:14, flexWrap:'wrap', fontSize:11, color:'var(--muted)' }}>
             {project.start_date && <span>Start: {project.start_date}</span>}
             {project.est_completion_date && <span>Est. Complete: {project.est_completion_date}</span>}
+            {project.billing_day && project.status !== 'Complete' && <span>Billing: {billingLabel(project.billing_day)}{nextBill ? ` · Next ${fmtBillingDate(nextBill)}` : ''}</span>}
             {sovSummary && <span>SOV: {sovSummary.lineCount} Items · {sovSummary.avgPct.toFixed(0)}% Avg · {fmtFull$(sovSummary.totalBilled)} Billed</span>}
           </div>
           <button onClick={() => setShowSov(true)} style={{ padding:'5px 12px', fontSize:11, fontFamily:'var(--font-mono)', background:'var(--accent-light)', border:'1px solid var(--accent)', borderRadius:4, color:'var(--accent)', cursor:'pointer', whiteSpace:'nowrap' }}>
@@ -398,7 +408,6 @@ export default function Projects({ bids }) {
   const [modal, setModal] = useState(null);
   const [statusFilter, setStatusFilter] = useState('All');
   const tasksApi = useProjectTasks();
-  const [taskProject, setTaskProject] = useState(null);
 
   const wonBids = (bids || [])
     .filter(b => (b.effective_status || b.status) === 'Won')
@@ -437,8 +446,6 @@ export default function Projects({ bids }) {
         <ProjectModal project={modal === 'new' ? null : modal} wonBids={wonBids} onClose={() => setModal(null)} onSave={handleSave} />
       )}
 
-      {taskProject && <TaskWindow project={taskProject} api={tasksApi} onClose={() => setTaskProject(null)} />}
-
       {/* KPIs */}
       <div className="kpi-grid" style={{ marginBottom: 24 }}>
         <div className="kpi"><div className="kpi-label">Total Projects</div><div className="kpi-value accent">{projects.length}</div></div>
@@ -474,7 +481,7 @@ export default function Projects({ bids }) {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          {filtered.map(p => <ProjectCard key={p.id} project={p} wonBids={wonBids} taskStats={statsByProject[p.id] || summarize([], p.id)} onOpenTasks={setTaskProject} onEdit={setModal} onDeleted={handleDeleted} />)}
+          {filtered.map(p => <ProjectCard key={p.id} project={p} wonBids={wonBids} taskStats={statsByProject[p.id] || summarize([], p.id)} tasksApi={tasksApi} onEdit={setModal} onDeleted={handleDeleted} />)}
         </div>
       )}
     </div>

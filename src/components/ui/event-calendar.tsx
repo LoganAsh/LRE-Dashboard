@@ -30,12 +30,15 @@ export interface CalKind {
   value: string;
   label: string;
   color: string;
+  showCount?: boolean;      // false: no count on its filter tab (for events that repeat without end)
 }
 
 export interface EventCalendarProps {
   events: CalEvent[];
   kinds: CalKind[];
   legend?: { label: string; color: string }[];
+  // Events that repeat without end (like monthly billing) are made on demand for the period being shown.
+  dynamicEvents?: (from: Date, to: Date) => CalEvent[];
   onEventClick?: (event: CalEvent) => void;
   defaultView?: CalView;
   className?: string;
@@ -369,20 +372,41 @@ function Tabs<T extends string>({
 
 /* ─── main component ────────────────────────────────────────── */
 
-export function EventCalendar({ events, kinds, legend, onEventClick, defaultView = "month", className }: EventCalendarProps) {
+export function EventCalendar({ events, kinds, legend, dynamicEvents, onEventClick, defaultView = "month", className }: EventCalendarProps) {
   const [view, setView] = useState<CalView>(defaultView);
   const [date, setDate] = useState(() => new Date());
   const [query, setQuery] = useState("");
   const [kindFilter, setKindFilter] = useState("all");
 
+  // The first and last day on screen for the current view
+  const range = useMemo<[Date, Date]>(() => {
+    if (view === "month") {
+      const first = new Date(date.getFullYear(), date.getMonth(), 1);
+      const s = addDays(first, -first.getDay());
+      return [s, addDays(s, 41)];
+    }
+    if (view === "week") {
+      const s = startOfWeek(date);
+      return [s, addDays(s, 6)];
+    }
+    if (view === "day") {
+      const s = startOfDay(date);
+      return [s, s];
+    }
+    const t = startOfDay(new Date());
+    return [t, addDays(t, 60)];                  // list view: the next 60 days
+  }, [view, date]);
+  const generated = useMemo(() => (dynamicEvents ? dynamicEvents(range[0], range[1]) : []), [dynamicEvents, range]);
+  const everything = useMemo(() => [...events, ...generated], [events, generated]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return events.filter(
+    return everything.filter(
       (e) =>
         (kindFilter === "all" || e.kind === kindFilter) &&
         (!q || `${e.title} ${e.details.join(" ")}`.toLowerCase().includes(q))
     );
-  }, [events, query, kindFilter]);
+  }, [everything, query, kindFilter]);
 
   const navigate = (dir: -1 | 1) =>
     setDate((prev) => {
@@ -409,9 +433,13 @@ export function EventCalendar({ events, kinds, legend, onEventClick, defaultView
     setView("day");
   };
 
+  const counted = new Set(kinds.filter((k) => k.showCount !== false).map((k) => k.value));
   const kindTabs = [
-    { value: "all", label: `All (${events.length})` },
-    ...kinds.map((k) => ({ value: k.value, label: `${k.label} (${events.filter((e) => e.kind === k.value).length})` })),
+    { value: "all", label: `All (${events.filter((e) => counted.has(e.kind)).length})` },
+    ...kinds.map((k) => ({
+      value: k.value,
+      label: k.showCount === false ? k.label : `${k.label} (${events.filter((e) => e.kind === k.value).length})`,
+    })),
   ];
 
   return (

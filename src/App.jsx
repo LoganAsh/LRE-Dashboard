@@ -216,7 +216,7 @@ export default function App() {
         ) : (
           <>
             {activeTab === 'Bid Dashboard' && <BidDashboard bids={bids} />}
-            {activeTab === 'Calendar' && <BidCalendar bids={bids} />}
+            {activeTab === 'Calendar' && <BidCalendar bids={bids} onNavigate={setActiveTab} />}
             {activeTab === 'Projects' && <Projects bids={bids} />}
             {activeTab === 'Weekly Schedule' && <WeeklySchedule />}
             {activeTab === 'Takeoff' && <Takeoff />}
