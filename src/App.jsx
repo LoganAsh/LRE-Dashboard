@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   LayoutDashboard, ChartColumn, TrendingUp, Users, ChartPie,
   ListChecks, FolderKanban, CalendarDays, CalendarRange, Ruler,
@@ -7,6 +7,7 @@ import { LOGO_B64 } from './logo.js';
 import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
 import { reloadPage } from './reload.js';
+import { useAutoRefresh } from './useAutoRefresh.js';
 import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './components/ui/sidebar';
 import BidDashboard from './BidDashboard.jsx';
 import BidCalendar from './BidCalendar.jsx';
@@ -158,6 +159,15 @@ export default function App() {
     reloadPage();
     setTimeout(() => { setSyncing(false); setSyncNote(null); }, 10000);     // only matters if the browser refuses to reload
   };
+
+  // When a new sync finishes (the hourly one, or anyone's manual one) refresh the page, as long as you are not mid-task.
+  // The Takeoff calculator has no synced data, so it is left alone.
+  const refreshAfterSync = useCallback(() => {
+    store.set(TAB_KEY, activeTab);
+    store.set(FLASH_KEY, JSON.stringify({ tone: 'ok', text: 'Updated With the Latest Sync' }));
+    reloadPage();
+  }, [activeTab]);
+  useAutoRefresh({ knownSyncAt: syncLog && syncLog.synced_at, enabled: !syncing && activeTab !== 'Takeoff', onNewSync: refreshAfterSync });
 
   const lastSync = syncLog
     ? new Date(syncLog.synced_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })

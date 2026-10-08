@@ -83,7 +83,7 @@ function SovEditor({ projectId, originalContract, onClose }) {
   const col = { padding: '6px 8px', fontSize: 11, fontFamily: 'var(--font-mono)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text)', outline: 'none', width: '100%', boxSizing: 'border-box' };
 
   return (
-    <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div data-open-window onClick={e => e.target === e.currentTarget && onClose()} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, width: '100%', maxWidth: 900, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
@@ -202,7 +202,7 @@ function ProjectModal({ project, wonBids, onClose, onSave }) {
   const Section = ({ title }) => <div style={{ fontSize:10, color:'var(--accent)', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:600, marginBottom:10, marginTop:6, paddingBottom:4, borderBottom:'1px solid var(--border)' }}>{title}</div>;
 
   return (
-    <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.75)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+    <div data-open-window onClick={e => e.target === e.currentTarget && onClose()} style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.75)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
       <div className="modal-inner" style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, width:'100%', maxWidth:580, maxHeight:'90vh', overflowY:'auto', boxShadow:'0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, background:'var(--surface)', zIndex:1 }}>
           <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:16 }}>{isNew ? 'New Project' : 'Edit Project'}</div>
