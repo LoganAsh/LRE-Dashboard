@@ -16,6 +16,14 @@ const STATUSES = [
   { value: 'Project Re-Bid', color: 'var(--accent)' },
 ];
 
+// What each client did on a project that was bid to several of them. Informational only:
+// it never changes the bid's overall status above.
+const DISPOSITIONS = [
+  { value: 'Pending', color: 'var(--accent)' },
+  { value: 'Client Awarded', color: 'var(--won)' },
+  { value: 'Client Not Awarded', color: 'var(--lost)' },
+];
+
 // Local calendar date (not UTC), so "today" is right in the evening too.
 const pad = (n) => String(n).padStart(2, '0');
 const localISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -47,17 +55,19 @@ export function StatusModal({ bid, onClose, onSave }) {
 
   // Place + % High/Low, one entry per client
   const [placements, setPlacements] = useState(() =>
-    Object.fromEntries(clientNames.map((c) => [c, { place: '', pct_high_low: '' }]))
+    Object.fromEntries(clientNames.map((c) => [c, { place: '', pct_high_low: '', disposition: 'Pending' }]))
   );
+  const savedClients = useRef(new Set());       // clients that already have a saved row, so clearing a value saves too
 
   useEffect(() => {
     let cancelled = false;
     supabase.from('lre_bid_placements').select('*').eq('bid_id', bid.id).then(({ data }) => {
       if (cancelled || !data || data.length === 0) return;
+      savedClients.current = new Set(data.map((row) => row.client_name));
       setPlacements((prev) => {
         const next = { ...prev };
         data.forEach((row) => {
-          next[row.client_name] = { place: row.place ?? '', pct_high_low: row.pct_high_low ?? '' };
+          next[row.client_name] = { place: row.place ?? '', pct_high_low: row.pct_high_low ?? '', disposition: row.disposition || 'Pending' };
         });
         return next;
       });
@@ -93,14 +103,19 @@ export function StatusModal({ bid, onClose, onSave }) {
     }).eq('id', bid.id);
     if (err) { setSaving(false); setError(err.message); return; }
 
-    // Save results per client (only rows with a value entered)
+    // Save results per client: rows with something entered, or that already exist (so clearing a value or
+    // setting a client back to Pending is saved too). Dispositions live here and never touch the bid's status.
     const placementRows = clientNames
-      .filter((c) => placements[c] && (placements[c].place !== '' || placements[c].pct_high_low !== ''))
+      .filter((c) => placements[c] && (
+        placements[c].place !== '' || placements[c].pct_high_low !== '' ||
+        (placements[c].disposition || 'Pending') !== 'Pending' || savedClients.current.has(c)
+      ))
       .map((c) => ({
         bid_id: bid.id,
         client_name: c,
         place: placements[c].place !== '' ? parseInt(placements[c].place) : null,
         pct_high_low: placements[c].pct_high_low !== '' ? parseFloat(placements[c].pct_high_low) : null,
+        disposition: placements[c].disposition || 'Pending',
       }));
     if (placementRows.length > 0) {
       const { error: placeErr } = await supabase.from('lre_bid_placements').upsert(placementRows, { onConflict: 'bid_id,client_name' });
@@ -130,6 +145,19 @@ export function StatusModal({ bid, onClose, onSave }) {
     e.preventDefault();
     setStatus(STATUSES[n].value);
     statusGroupRef.current?.querySelector(`[data-status="${STATUSES[n].value}"]`)?.focus();
+  };
+
+  // Arrow keys move between one client's three options, like a native radio group.
+  const onDispositionKey = (e, clientName) => {
+    const cur = placements[clientName]?.disposition || 'Pending';
+    const i = DISPOSITIONS.findIndex((d) => d.value === cur);
+    let n;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % DISPOSITIONS.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i - 1 + DISPOSITIONS.length) % DISPOSITIONS.length;
+    else return;
+    e.preventDefault();
+    updatePlacement(clientName, 'disposition', DISPOSITIONS[n].value);
+    e.currentTarget.querySelector(`[data-disposition="${DISPOSITIONS[n].value}"]`)?.focus();
   };
 
   const id = useId();
@@ -282,6 +310,50 @@ export function StatusModal({ bid, onClose, onSave }) {
                   className={inputCls}
                 />
               </div>
+
+              {/* Client dispositions: only when the project was bid to several clients */}
+              {clientNames.length > 1 && (
+                <div>
+                  <span id={`${id}-dispositions`} className={labelCls}>
+                    Client Dispositions<span className={hintCls}>(Doesn't Change the Bid Status)</span>
+                  </span>
+                  <div role="group" aria-labelledby={`${id}-dispositions`} className="space-y-3">
+                    {clientNames.map((c) => {
+                      const current = placements[c]?.disposition || 'Pending';
+                      return (
+                        <div key={c} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+                          <span className="min-w-[140px] flex-1 truncate text-[13px] font-medium" title={c}>{c}</span>
+                          <div
+                            role="radiogroup" aria-label={`Disposition for ${c}`} data-disposition-group={c}
+                            onKeyDown={(e) => onDispositionKey(e, c)}
+                            className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1"
+                          >
+                            {DISPOSITIONS.map((d) => {
+                              const on = current === d.value;
+                              return (
+                                <button
+                                  key={d.value} type="button" role="radio" aria-checked={on} data-disposition={d.value}
+                                  tabIndex={on ? 0 : -1}
+                                  onClick={() => updatePlacement(c, 'disposition', d.value)}
+                                  className={cn(
+                                    'inline-flex appearance-none items-center gap-1.5 border-0 border-b-2 bg-transparent pb-0.5 pt-0.5 text-[12.5px] [font-family:inherit] outline-none cursor-pointer',
+                                    'transition-colors focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c]',
+                                    on ? 'font-semibold text-[var(--text)]' : 'font-medium text-[var(--text-subtle)] hover:text-[var(--text)]'
+                                  )}
+                                  style={{ borderBottomStyle: 'solid', borderBottomColor: on ? d.color : 'transparent' }}
+                                >
+                                  <span className="size-2 shrink-0 rounded-full" style={{ background: d.color }} aria-hidden="true" />
+                                  {d.value}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Results per client */}
               <div>
