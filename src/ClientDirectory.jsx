@@ -39,7 +39,7 @@ function ClientCard({ row, isTop, logo, busy, onOpen, onPick }) {
     >
       {/* The logo takes whatever height is left after the details below */}
       <div className="relative min-h-0 flex-1">
-        <ClientLogo name={name} logo={logo} busy={busy} onPick={onPick} className="absolute inset-0" />
+        <ClientLogo name={name} logo={logo} busy={busy} onPick={onPick} menu className="absolute inset-0" />
       </div>
 
       <div className="shrink-0">
