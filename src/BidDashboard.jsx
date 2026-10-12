@@ -138,7 +138,6 @@ function NextDeadline({ bids, onOpen }) {
 /* ── upcoming bids: grouped agenda ────────────────────────────────────────── */
 
 const textBtn = 'appearance-none border-0 bg-transparent p-0 text-xs font-medium [font-family:inherit] outline-none cursor-pointer focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#ea580c]';
-const revealOnHover = 'md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100';
 
 function AgendaRow({ bid, onOpen, onTogglePriority, onNotBidding }) {
   const days = daysUntil(bid.bid_date);
@@ -149,7 +148,7 @@ function AgendaRow({ bid, onOpen, onTogglePriority, onNotBidding }) {
   return (
     <div
       onClick={() => onOpen(bid)}
-      className="group -mx-3 flex cursor-pointer items-center gap-4 rounded-lg px-3 py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--text)_3%,transparent)]"
+      className="row-hover -mx-3 flex cursor-pointer items-center gap-4 rounded-lg px-3 py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--text)_3%,transparent)]"
     >
       <div className="w-11 shrink-0 text-center leading-none">
         <div className="text-[22px] font-semibold tabular-nums">{d.getDate()}</div>
@@ -174,7 +173,7 @@ function AgendaRow({ bid, onOpen, onTogglePriority, onNotBidding }) {
           type="button"
           onClick={() => onNotBidding(bid)}
           aria-label={`Mark Not Bidding: ${bid.name}`}
-          className={cn(textBtn, 'text-[var(--text-subtle)] hover:text-[#b91c1c] dark:hover:text-[#f87171]', revealOnHover)}
+          className={cn(textBtn, 'row-reveal text-[var(--text-subtle)] hover:text-[#b91c1c] dark:hover:text-[#f87171]')}
         >
           Not Bidding
         </button>
@@ -186,7 +185,7 @@ function AgendaRow({ bid, onOpen, onTogglePriority, onNotBidding }) {
           aria-pressed={hp}
           className={cn(
             'flex size-7 appearance-none items-center justify-center rounded-md border-0 bg-transparent outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[#ea580c]',
-            !hp && revealOnHover
+            !hp && 'row-reveal'
           )}
         >
           <Star className={cn('size-4', hp ? 'fill-[#d99a06] text-[#d99a06]' : 'text-[var(--text-subtle)] hover:text-[#d99a06]')} strokeWidth={1.75} aria-hidden="true" />

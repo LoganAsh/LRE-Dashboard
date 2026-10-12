@@ -319,6 +319,14 @@ tr:hover td { background: color-mix(in srgb, var(--text) 3%, transparent); }
 :is(.contour, .kpi, .chart-card):nth-child(4n+3)::before { top: auto; bottom: -50px; transform: rotate(180deg); }
 :is(.contour, .kpi, .chart-card):nth-child(4n+4)::before { top: auto; bottom: -50px; right: auto; left: -70px; transform: scaleY(-1); }
 
+/* ══════════════ ROW ACTIONS: shown while the pointer is over THAT row (or focus is inside it) ══════════════
+   Plain :hover on the row, so it works on any mouse; no dependence on the device reporting hover support.
+   Touch screens cannot hover, so there the actions are simply always visible. */
+.row-reveal { opacity: 0; transition: opacity 0.15s, color 0.15s; }
+.row-hover:hover .row-reveal, .row-hover:focus-within .row-reveal { opacity: 1; }
+@media (hover: none) { .row-reveal { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .row-reveal { transition: none; } }
+
 /* ══════════════ LOGO STRIP: slow sideways scroll, pauses on hover / focus / when paused ══════════════ */
 .logo-marquee { position: relative; overflow: hidden; padding: 2px 0;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
