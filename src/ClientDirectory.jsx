@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fmt$ } from './utils.js';
 import { fmtDate } from './dates.js';
@@ -20,7 +19,7 @@ function MiniStat({ label, value }) {
   );
 }
 
-function ClientCard({ row, isTop, logo, busy, onOpen, onPick }) {
+function ClientCard({ row, isTop, logo, onOpen }) {
   const { name } = row;
   return (
     <article
@@ -39,7 +38,7 @@ function ClientCard({ row, isTop, logo, busy, onOpen, onPick }) {
     >
       {/* The logo takes whatever height is left after the details below */}
       <div className="relative min-h-0 flex-1">
-        <ClientLogo name={name} logo={logo} busy={busy} onPick={onPick} menu className="absolute inset-0" />
+        <ClientLogo name={name} logo={logo} className="absolute inset-0" />
       </div>
 
       <div className="shrink-0">
@@ -80,7 +79,7 @@ export default function ClientDirectory({ bids: initialBids }) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState('volume');
   const [selectedClient, setSelectedClient] = useState(null);
-  const { logos, busyKey, error, clearError, upload, remove } = useClientLogos();
+  const { logos, busyKey, error, clearError, upload } = useClientLogos();
 
   useEffect(() => { setBids(initialBids); }, [initialBids]);
 
@@ -116,8 +115,9 @@ export default function ClientDirectory({ bids: initialBids }) {
           logo={logos[clientKey(selectedClient)]?.url}
           busy={busyKey === clientKey(selectedClient)}
           onUpload={(file) => upload(selectedClient, file)}
-          onRemove={() => remove(selectedClient)}
-          onClose={() => setSelectedClient(null)}
+          logoError={error}
+          onClearLogoError={clearError}
+          onClose={() => { clearError(); setSelectedClient(null); }}
         />
       )}
 
@@ -135,15 +135,6 @@ export default function ClientDirectory({ bids: initialBids }) {
         <span className="table-count">{filtered.length} Clients</span>
       </div>
 
-      {error && (
-        <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-lg border border-[color:var(--lost)] px-3.5 py-2.5 text-[13px] text-[#b91c1c] dark:text-[#f87171]">
-          <span>{error}</span>
-          <button type="button" onClick={clearError} aria-label="Dismiss message" className="mt-0.5 shrink-0 appearance-none border-0 bg-transparent p-0 text-inherit cursor-pointer">
-            <X className="size-4" strokeWidth={1.75} aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-[13px] text-[var(--text-subtle)]">No clients found.</div>
       ) : (
@@ -154,9 +145,7 @@ export default function ClientDirectory({ bids: initialBids }) {
               row={row}
               isTop={topClients.has(row.name)}
               logo={logos[clientKey(row.name)]?.url}
-              busy={busyKey === clientKey(row.name)}
               onOpen={setSelectedClient}
-              onPick={(file) => upload(row.name, file)}
             />
           ))}
         </div>
@@ -164,7 +153,7 @@ export default function ClientDirectory({ bids: initialBids }) {
 
       <div className="mt-5 flex items-center gap-1.5 text-xs text-[var(--text-subtle)]">
         <span className="size-1.5 rounded-full bg-[var(--won)]" aria-hidden="true" />Top 10 Client by Volume
-        <span className="mx-1.5" aria-hidden="true">·</span>Hover a logo to upload or change it
+        <span className="mx-1.5" aria-hidden="true">·</span>Open a client to change its logo
       </div>
     </div>
   );

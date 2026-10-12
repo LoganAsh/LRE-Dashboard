@@ -38,7 +38,7 @@ function SectionTitle({ children }) {
   );
 }
 
-export default function ClientDetail({ clientName, bids, onBidSave, logo, busy, onUpload, onRemove, onClose }) {
+export default function ClientDetail({ clientName, bids, onBidSave, logo, busy, onUpload, logoError, onClearLogoError, onClose }) {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [modalBid, setModalBid] = useState(null);
@@ -77,7 +77,7 @@ export default function ClientDetail({ clientName, bids, onBidSave, logo, busy, 
           >
             {/* Header */}
             <div className="flex shrink-0 items-center gap-4 border-b border-[color:var(--border)] px-6 py-4">
-              <ClientLogo name={clientName} logo={logo} busy={busy} onPick={onUpload} size={60} />
+              <ClientLogo name={clientName} logo={logo} size={60} />
               <div className="min-w-0 flex-1">
                 <Dialog.Title className="truncate text-[20px] font-semibold leading-snug tracking-tight">{clientName}</Dialog.Title>
                 <Dialog.Description className="mt-0.5 text-xs text-[var(--text-subtle)]">
@@ -89,14 +89,17 @@ export default function ClientDetail({ clientName, bids, onBidSave, logo, busy, 
                     onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onUpload(f); e.target.value = ''; }}
                   />
                   <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className={cn(textBtn, orange, 'disabled:opacity-50')}>
-                    {logo ? 'Change Logo' : 'Upload Logo'}
+                    {busy ? 'Saving…' : logo ? 'Change Logo' : 'Upload Logo'}
                   </button>
-                  {logo && (
-                    <button type="button" disabled={busy} onClick={onRemove} className={cn(textBtn, 'text-[var(--text-subtle)] hover:text-[#b91c1c] disabled:opacity-50 dark:hover:text-[#f87171]')}>
-                      Remove Logo
-                    </button>
-                  )}
                 </div>
+                {logoError && (
+                  <div role="alert" className="mt-2 flex items-start justify-between gap-3 rounded-lg border border-[color:var(--lost)] px-3 py-2 text-xs text-[#b91c1c] dark:text-[#f87171]">
+                    <span>{logoError}</span>
+                    <button type="button" onClick={onClearLogoError} aria-label="Dismiss message" className="mt-0.5 shrink-0 appearance-none border-0 bg-transparent p-0 text-inherit cursor-pointer">
+                      <X className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
               </div>
               <Dialog.Close
                 aria-label="Close"
