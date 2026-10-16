@@ -9,6 +9,7 @@ import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 import { StatusModal } from './StatusModal.jsx';
 import { MS_DAY, startOfToday, dateOf, daysUntil, dateAtTime, parseTime, fmtDate } from './dates.js';
 import { useBillingProjects, nextBillingDate, billingLabel } from './projectBilling.js';
+import Bid2WinStatus from './Bid2WinStatus.jsx';
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
 
@@ -351,6 +352,8 @@ export default function BidDashboard({ bids: initialBids, onNavigate }) {
       {modalBid && <StatusModal bid={modalBid} onClose={() => setModalBid(null)} onSave={handleSave} />}
 
       <NextDeadline bids={upcomingBids} onOpen={setModalBid} />
+
+      <Bid2WinStatus />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
         <StatCard label="Upcoming Bids" value={upcomingBids.length} sub={`${bidsWeekly[0]} Due in the Next 7 Days`} icon={CalendarClock} series={bidsWeekly} tone="accent" />
