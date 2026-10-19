@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, BellRing, ChevronLeft, ChevronRight, ChevronsUpDown, Star, StickyNote } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { fmtFull$, fmt$, classifyStatus, YEARS, filterByType, isPublicBid } from './utils.js';
+import { fmtFull$, fmt$, classifyStatus, YEARS, filterByType } from './utils.js';
+import { scopeBids, countStatuses, filterAndSort } from './bidLogLogic.js';
 import { parseClients } from './hooks.js';
 import { StatusModal } from './StatusModal.jsx';
 
@@ -81,42 +82,9 @@ export default function BidLog({ bids: initialBids }) {
   }, []);
 
   // Everything except the status filter, so each status tab can show its own count.
-  const scoped = useMemo(() => {
-    const q = search.toLowerCase();
-    return bids
-      .filter((b) => {
-        const eff = b.effective_status || b.status;
-        if (b.bid_amount > 0) return true;
-        return eff === 'Upcoming' && b.bid_date && b.bid_date >= oneWeekAgo;
-      })
-      .filter((b) => !q || b.name?.toLowerCase().includes(q) || b.client?.toLowerCase().includes(q))
-      .filter((b) => {
-        if (typeFilter === 'All') return true;
-        const pub = isPublicBid(b);
-        return typeFilter === 'Public' ? pub : !pub;
-      })
-      .filter((b) => !yearFilter || b.year === yearFilter);
-  }, [bids, search, typeFilter, yearFilter, oneWeekAgo]);
-
-  const statusCounts = useMemo(() => {
-    const counts = {};
-    scoped.forEach((b) => { const s = b.effective_status || b.status; counts[s] = (counts[s] || 0) + 1; });
-    return counts;
-  }, [scoped]);
-
-  const filtered = useMemo(() => {
-    const isEmpty = (v) => v == null || v === '';
-    return scoped
-      .filter((b) => !statusFilter || (b.effective_status || b.status) === statusFilter)
-      .sort((a, b) => {
-        const av = a[sortKey], bv = b[sortKey];
-        if (isEmpty(av) && isEmpty(bv)) return 0;
-        if (isEmpty(av)) return 1;                         // blanks always sort to the bottom
-        if (isEmpty(bv)) return -1;
-        if (typeof av === 'string' || typeof bv === 'string') return sortDir * String(av).localeCompare(String(bv));
-        return sortDir * (av - bv);
-      });
-  }, [scoped, statusFilter, sortKey, sortDir]);
+  const scoped = useMemo(() => scopeBids(bids, { search, typeFilter, yearFilter, oneWeekAgo }), [bids, search, typeFilter, yearFilter, oneWeekAgo]);
+  const statusCounts = useMemo(() => countStatuses(scoped), [scoped]);
+  const filtered = useMemo(() => filterAndSort(scoped, { statusFilter, sortKey, sortDir }), [scoped, statusFilter, sortKey, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

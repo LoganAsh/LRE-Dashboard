@@ -14,7 +14,7 @@ const DEFAULT_SOV = [
   'Sewer','Water','Storm Drain','Erosion Control',
 ];
 
-const STATUS_COLORS = {
+export const STATUS_COLORS = {
   'Not Started': { color: '#7a8298', bg: 'rgba(122,130,152,0.12)' },
   'Mobilizing':  { color: '#e8c547', bg: 'rgba(232,197,71,0.12)'  },
   'Active':      { color: '#f97316', bg: 'rgba(249,115,22,0.12)'  },
@@ -22,7 +22,7 @@ const STATUS_COLORS = {
   'Complete':    { color: '#2ebd7e', bg: 'rgba(46,189,126,0.12)'  },
 };
 
-const STATUS_ORDER = ['Not Started','Mobilizing','Active','Punch List','Complete'];
+export const STATUS_ORDER = ['Not Started','Mobilizing','Active','Punch List','Complete'];
 
 const field = {
   width: '100%', padding: '7px 10px', background: 'var(--surface)',
@@ -40,7 +40,7 @@ function StatusPill({ status }) {
 }
 
 // ── SOV Editor ────────────────────────────────────────────────────────────────
-function SovEditor({ projectId, originalContract, onClose }) {
+export function SovEditor({ projectId, originalContract, onClose }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,7 +97,7 @@ function SovEditor({ projectId, originalContract, onClose }) {
         </div>
 
         <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
+          <table className="sov-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
             <thead style={{ position: 'sticky', top: 0, background: 'var(--surface2)', zIndex: 1 }}>
               <tr>
                 {['Category','Description','Budgeted','Actual Cost','% Complete','Billed to Date',''].map(h => (
@@ -109,13 +109,13 @@ function SovEditor({ projectId, originalContract, onClose }) {
               {loading
                 ? <tr><td colSpan={7} style={{ padding: 20, textAlign: 'center', color: 'var(--muted)' }}>Loading…</td></tr>
                 : rows.map((row, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '6px 8px', minWidth: 180 }}><input value={row.category} onChange={e => update(idx,'category',e.target.value)} style={col} placeholder="Category" /></td>
-                    <td style={{ padding: '6px 8px', minWidth: 140 }}><input value={row.description||''} onChange={e => update(idx,'description',e.target.value)} style={col} placeholder="Notes" /></td>
-                    <td style={{ padding: '6px 8px', minWidth: 110 }}><input type="number" value={row.budgeted_amount||''} onChange={e => update(idx,'budgeted_amount',e.target.value)} style={{ ...col, textAlign:'right' }} placeholder="0" /></td>
-                    <td style={{ padding: '6px 8px', minWidth: 110 }}><input type="number" value={row.actual_cost||''} onChange={e => update(idx,'actual_cost',e.target.value)} style={{ ...col, textAlign:'right', color: parseFloat(row.actual_cost) > parseFloat(row.budgeted_amount) && row.budgeted_amount > 0 ? 'var(--lost)' : 'var(--text)' }} placeholder="0" /></td>
-                    <td style={{ padding: '6px 8px', minWidth: 90 }}><input type="number" min="0" max="100" value={row.pct_complete||''} onChange={e => update(idx,'pct_complete',e.target.value)} style={{ ...col, textAlign:'right' }} placeholder="0" /></td>
-                    <td style={{ padding: '6px 8px', minWidth: 110 }}><input type="number" value={row.billed_to_date||''} onChange={e => update(idx,'billed_to_date',e.target.value)} style={{ ...col, textAlign:'right' }} placeholder="0" /></td>
+                  <tr key={idx} className="sov-row" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td data-label="Category" className="sov-cell sov-category" style={{ padding: '6px 8px', minWidth: 180 }}><input value={row.category} onChange={e => update(idx,'category',e.target.value)} style={col} placeholder="Category" /></td>
+                    <td data-label="Notes" className="sov-cell sov-description" style={{ padding: '6px 8px', minWidth: 140 }}><input value={row.description||''} onChange={e => update(idx,'description',e.target.value)} style={col} placeholder="Notes" /></td>
+                    <td data-label="Budgeted" className="sov-cell sov-budgeted_amount" style={{ padding: '6px 8px', minWidth: 110 }}><input type="number" value={row.budgeted_amount||''} onChange={e => update(idx,'budgeted_amount',e.target.value)} style={{ ...col, textAlign:'right' }} placeholder="0" /></td>
+                    <td data-label="Actual Cost" className="sov-cell sov-actual_cost" style={{ padding: '6px 8px', minWidth: 110 }}><input type="number" value={row.actual_cost||''} onChange={e => update(idx,'actual_cost',e.target.value)} style={{ ...col, textAlign:'right', color: parseFloat(row.actual_cost) > parseFloat(row.budgeted_amount) && row.budgeted_amount > 0 ? 'var(--lost)' : 'var(--text)' }} placeholder="0" /></td>
+                    <td data-label="% Complete" className="sov-cell sov-pct_complete" style={{ padding: '6px 8px', minWidth: 90 }}><input type="number" min="0" max="100" value={row.pct_complete||''} onChange={e => update(idx,'pct_complete',e.target.value)} style={{ ...col, textAlign:'right' }} placeholder="0" /></td>
+                    <td data-label="Billed to Date" className="sov-cell sov-billed_to_date" style={{ padding: '6px 8px', minWidth: 110 }}><input type="number" value={row.billed_to_date||''} onChange={e => update(idx,'billed_to_date',e.target.value)} style={{ ...col, textAlign:'right' }} placeholder="0" /></td>
                     <td style={{ padding: '6px 8px', textAlign:'center' }}>
                       <button onClick={() => removeRow(idx)} style={{ background:'none', border:'none', color:'var(--muted)', cursor:'pointer', fontSize:14, padding:2 }}
                         onMouseEnter={e => e.currentTarget.style.color='var(--lost)'}
@@ -127,7 +127,7 @@ function SovEditor({ projectId, originalContract, onClose }) {
               }
             </tbody>
             <tfoot>
-              <tr style={{ background: 'var(--surface2)' }}>
+              <tr className="sov-total" style={{ background: 'var(--surface2)' }}>
                 <td colSpan={2} style={{ padding:'8px 10px', fontFamily:'var(--font-display)', fontWeight:700, fontSize:12 }}>Totals</td>
                 <td style={{ padding:'8px 10px', textAlign:'right', fontFamily:'var(--font-mono)', fontSize:12, fontWeight:600, color: totalBudget > originalContract ? 'var(--lost)' : 'var(--text)' }}>{fmtFull$(totalBudget)}</td>
                 <td style={{ padding:'8px 10px', textAlign:'right', fontFamily:'var(--font-mono)', fontSize:12, fontWeight:600, color: totalActual > totalBudget && totalBudget > 0 ? 'var(--lost)' : 'var(--text)' }}>{fmtFull$(totalActual)}</td>
@@ -151,7 +151,7 @@ function SovEditor({ projectId, originalContract, onClose }) {
 }
 
 // ── Project Modal ─────────────────────────────────────────────────────────────
-function ProjectModal({ project, wonBids, onClose, onSave }) {
+export function ProjectModal({ project, wonBids, onClose, onSave }) {
   const isNew = !project?.id;
   const [form, setForm] = useState({
     bid_id: project?.bid_id || '',

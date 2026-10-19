@@ -6,9 +6,9 @@ import { parseClients } from './hooks.js';
 import { fmtFull$ } from './utils.js';
 import { useBillingProjects, billingDates, billingLabel } from './projectBilling.js';
 
-const COLORS = { bid: '#f97316', prebid: '#7c6cf0', overdue: '#dc2626', billing: '#0f766e' };
+export const COLORS = { bid: '#f97316', prebid: '#7c6cf0', overdue: '#dc2626', billing: '#0f766e' };
 
-const KINDS = [
+export const KINDS = [
   { value: 'bid', label: 'Bids', color: COLORS.bid },
   { value: 'prebid', label: 'Pre-Bids', color: COLORS.prebid },
   { value: 'billing', label: 'Billing', color: COLORS.billing, showCount: false },
@@ -44,7 +44,7 @@ const clientsOf = (b) =>
 const clip = (s, n = 140) => (s && s.length > n ? s.slice(0, n - 1) + '…' : s);
 
 // Same bids and pre-bids the Bid Dashboard shows (shared selectors), turned into calendar events.
-function buildEvents(bids) {
+export function buildEvents(bids) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const out = [];
@@ -78,7 +78,7 @@ function buildEvents(bids) {
 }
 
 // Monthly billing dates for the period being shown, from each project's billing day (stops once a project is Complete)
-function billingEventsBetween(projects, from, to) {
+export function billingEventsBetween(projects, from, to) {
   const out = [];
   projects.forEach((p) => {
     billingDates(p, from, to).forEach((d) => {

@@ -8,6 +8,8 @@ import { useBids } from './hooks.js';
 import { SYNC_FUNCTION_URL } from './supabase.js';
 import { reloadPage } from './reload.js';
 import { useAutoRefresh } from './useAutoRefresh.js';
+import { useIsMobile } from './mobile/useIsMobile.js';
+import MobileApp from './mobile/MobileApp.jsx';
 import { Sidebar, SidebarBody, SidebarLink, useSidebar } from './components/ui/sidebar';
 import BidDashboard from './BidDashboard.jsx';
 import BidCalendar from './BidCalendar.jsx';
@@ -116,6 +118,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [syncNote, setSyncNote] = useState(() => readFlash());   // { text, tone: 'busy' | 'ok' | 'error' }
   const { bids, syncLog, loading, error } = useBids();
+  const isMobile = useIsMobile();     // phone-sized screen: the whole phone layout takes over; desktop is untouched
 
   // Same rule the Bid Dashboard uses for its "Upcoming Bids" list
   const upcomingCount = useMemo(() => {
@@ -172,6 +175,16 @@ export default function App() {
   const lastSync = syncLog
     ? new Date(syncLog.synced_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
     : null;
+
+  if (isMobile) {
+    return (
+      <MobileApp
+        activeTab={activeTab} setActiveTab={setActiveTab} bids={bids} loading={loading} error={error} upcomingCount={upcomingCount}
+        lastSync={lastSync} syncing={syncing} syncNote={syncNote} handleSync={handleSync} theme={theme} setTheme={setTheme}
+        yearFilter={yearFilter} setYearFilter={setYearFilter} typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+      />
+    );
+  }
 
   return (
     <div className="app-shell flex-col md:flex-row">

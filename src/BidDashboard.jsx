@@ -2,51 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, ChevronDown, ChevronUp, Star, TriangleAlert, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from './supabase.js';
-import { parseClients } from './hooks.js';
 import { fmtFull$ } from './utils.js';
 import { Card, CardStatSparkline } from './components/ui/card';
 import { getUpcomingBids, getUpcomingPreBids } from './bidSelectors.js';
 import { StatusModal } from './StatusModal.jsx';
-import { MS_DAY, startOfToday, dateOf, daysUntil, dateAtTime, parseTime, fmtDate } from './dates.js';
+import { MS_DAY, startOfToday, dateOf, daysUntil, dateAtTime, fmtDate } from './dates.js';
 import { useBillingProjects, nextBillingDate, billingLabel } from './projectBilling.js';
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
 
-const clientsOf = (b) => (b.clients && b.clients.length > 0) ? b.clients : parseClients(b.client || '');
-
-// Dot color for how soon something is due (same thresholds as the Bid Log)
-function urgencyOf(days) {
-  if (days < 0)  return { color: '#dc2626' };
-  if (days <= 3) return { color: '#ea580c' };
-  if (days <= 7) return { color: '#ca8a04' };
-  return { color: '#16a34a' };
-}
-function countdown(days) {
-  if (days < 0) return `${-days} ${-days === 1 ? 'Day' : 'Days'} Overdue`;
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Tomorrow';
-  return `In ${days} Days`;
-}
-
-const timeMinutes = (b) => { const t = parseTime(b.bid_time); return t ? t.h * 60 + t.min : 24 * 60; };
-const byDueDate = (a, b) => a.bid_date.localeCompare(b.bid_date) || timeMinutes(a) - timeMinutes(b);
-
-// Which agenda group a bid belongs to. High priority bids are pinned to the top, as before.
-const GROUPS = [
-  { key: 'priority', label: 'High Priority' },
-  { key: 'overdue',  label: 'Past Due' },
-  { key: 'this',     label: 'This Week' },
-  { key: 'next',     label: 'Next Week' },
-  { key: 'later',    label: 'Later' },
-];
-function groupOf(bid, today) {
-  if (bid.high_priority) return 'priority';
-  const d = dateOf(bid.bid_date);
-  if (d < today) return 'overdue';
-  const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());   // weeks start Sunday, like the Calendar
-  const weeksOut = Math.floor(Math.round((d - weekStart) / MS_DAY) / 7);
-  return weeksOut <= 0 ? 'this' : weeksOut === 1 ? 'next' : 'later';
-}
+import { clientsOf, urgencyOf, countdown, byDueDate, GROUPS, groupOf } from './dashboardHelpers.js';
 
 function useNow(ms = 30000) {
   const [now, setNow] = useState(() => new Date());

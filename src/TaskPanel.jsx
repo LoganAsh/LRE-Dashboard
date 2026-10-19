@@ -75,10 +75,10 @@ function TaskRow({ task, expanded, addingSub, onToggleExpand, onStartSub, onEdit
         </button>
         <button type="button" onClick={() => api.updateTask(task.id, { status: nextStatus(task.status) })}
           aria-label={`Status: ${task.status}. Change to ${nextStatus(task.status)}: ${task.title}`} title="Click to change status"
-          className={cn(resetBtn, 'inline-flex w-[92px] shrink-0 items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text)] max-sm:hidden')}>
+          className={cn(resetBtn, 'inline-flex w-[92px] shrink-0 items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text)] max-md:hidden')}>
           <StatusDot status={task.status} />{task.status}
         </button>
-        <span className="flex w-[64px] shrink-0 justify-end max-sm:hidden"><DueLabel task={task} /></span>
+        <span className="flex w-[64px] shrink-0 justify-end"><DueLabel task={task} /></span>
       </div>
 
       {showSubs && (
