@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+import { SheetGrip } from './mobile/Sheet.jsx';
 import { Star, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from './supabase.js';
@@ -135,6 +136,7 @@ export function StatusModal({ bid, onClose, onSave }) {
 
   // Arrow keys move between status options, like a native radio group.
   const statusGroupRef = useRef(null);
+  const popupRef = useRef(null);       // for the phone's swipe-down-to-close handle
   const selectedRef = useRef(null);
   const onStatusKey = (e) => {
     const i = STATUSES.findIndex((s) => s.value === status);
@@ -167,9 +169,9 @@ export function StatusModal({ bid, onClose, onSave }) {
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-[250] bg-black/30 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
-        <Dialog.Viewport className="fixed inset-0 z-[250] flex items-center justify-center p-4 max-sm:p-0">
-          <Dialog.Popup
+        <Dialog.Backdrop data-sheet-backdrop className="fixed inset-0 z-[250] bg-black/30 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
+        <Dialog.Viewport data-sheet-viewport className="fixed inset-0 z-[250] flex items-center justify-center p-4 max-sm:p-0">
+          <Dialog.Popup ref={popupRef} data-sheet-popup data-sheet-tall
             initialFocus={selectedRef}
             className={cn(
               'flex w-full max-w-[600px] flex-col overflow-hidden border border-[color:var(--border)] bg-[var(--card)] text-[var(--text)] outline-none',
@@ -177,6 +179,7 @@ export function StatusModal({ bid, onClose, onSave }) {
               'transition-[opacity,transform] duration-150 data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0 data-[ending-style]:opacity-0'
             )}
           >
+            <SheetGrip popupRef={popupRef} onClose={onClose} className="md:hidden" />
             {/* Header */}
             <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[color:var(--border)] px-6 py-4">
               <div className="min-w-0">
@@ -450,7 +453,7 @@ export function StatusModal({ bid, onClose, onSave }) {
             </div>
 
             {/* Footer */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-3.5">
+            <div data-sheet-foot className="flex shrink-0 items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-3.5">
               <p role="alert" className="min-w-0 flex-1 text-xs text-[var(--lost)]">{problem}</p>
               <div className="flex shrink-0 gap-2">
                 <button

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+import { SheetGrip } from './mobile/Sheet.jsx';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUSES, isOverdue } from './projectTasks.js';
@@ -21,6 +22,7 @@ export default function TaskEditor({ task, parent, subtasks = [], api, onClose }
   const [confirming, setConfirming] = useState(false);
   const titleRef = useRef(null);
   const groupRef = useRef(null);
+  const popupRef = useRef(null);       // for the phone's swipe-down-to-close handle
 
   useEffect(() => {                                   // the delete confirmation expires on its own
     if (!confirming) return;
@@ -64,9 +66,9 @@ export default function TaskEditor({ task, parent, subtasks = [], api, onClose }
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-[250] bg-black/30 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
-        <Dialog.Viewport className="fixed inset-0 z-[250] flex items-center justify-center p-4 max-sm:p-0">
-          <Dialog.Popup
+        <Dialog.Backdrop data-sheet-backdrop className="fixed inset-0 z-[250] bg-black/30 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
+        <Dialog.Viewport data-sheet-viewport className="fixed inset-0 z-[250] flex items-center justify-center p-4 max-sm:p-0">
+          <Dialog.Popup ref={popupRef} data-sheet-popup
             initialFocus={titleRef}
             className={cn(
               'flex w-full max-w-[560px] flex-col overflow-hidden border border-[color:var(--border)] bg-[var(--card)] text-[var(--text)] outline-none',
@@ -74,6 +76,7 @@ export default function TaskEditor({ task, parent, subtasks = [], api, onClose }
               'transition-[opacity,transform] duration-150 data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0 data-[ending-style]:opacity-0'
             )}
           >
+            <SheetGrip popupRef={popupRef} onClose={onClose} className="md:hidden" />
             <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[color:var(--border)] px-6 py-4">
               <div className="min-w-0">
                 <Dialog.Title className="text-[17px] font-semibold leading-snug tracking-tight">{isSub ? 'Edit Subtask' : 'Edit Task'}</Dialog.Title>
@@ -156,7 +159,7 @@ export default function TaskEditor({ task, parent, subtasks = [], api, onClose }
               )}
             </div>
 
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-3.5">
+            <div data-sheet-foot className="flex shrink-0 items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-3.5">
               <button type="button" onClick={remove}
                 className={cn(resetBtn, 'text-[13px] font-medium', confirming ? 'text-[#b91c1c] underline dark:text-[#f87171]' : 'text-[var(--text-subtle)] hover:text-[#b91c1c] dark:hover:text-[#f87171]')}>
                 {confirming ? (isSub || subtasks.length === 0 ? 'Click Again to Delete' : `Click Again to Delete With ${subtasks.length} ${subtasks.length === 1 ? 'Subtask' : 'Subtasks'}`) : (isSub ? 'Delete Subtask' : 'Delete Task')}

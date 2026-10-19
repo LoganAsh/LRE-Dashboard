@@ -88,15 +88,15 @@ function RosterModal({ onClose }) {
         <div style={{overflowY:'auto',flex:1,padding:16}}>
           {tab==='crew' && (
             <>
-              <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <table className="roster-table" style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead><tr>{['Name','Role','Phone','Active'].map(h=><th key={h} style={{padding:'6px 8px',textAlign:'left',fontSize:10,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.08em',borderBottom:'1px solid var(--border)'}}>{h}</th>)}</tr></thead>
                 <tbody>
                   {crew.map((c,i)=>(
-                    <tr key={i} style={{borderBottom:'1px solid var(--border)'}}>
-                      <td style={{padding:'6px 6px'}}><input value={c.name} onChange={e=>updCrew(i,'name',e.target.value)} style={col} placeholder="Full name" /></td>
-                      <td style={{padding:'6px 6px'}}><input value={c.role||''} onChange={e=>updCrew(i,'role',e.target.value)} style={col} placeholder="Operator, Laborer…" /></td>
-                      <td style={{padding:'6px 6px'}}><input value={c.phone||''} onChange={e=>updCrew(i,'phone',e.target.value)} style={col} placeholder="Phone" /></td>
-                      <td style={{padding:'6px 6px',textAlign:'center'}}><input type="checkbox" checked={c.active} onChange={e=>updCrew(i,'active',e.target.checked)} /></td>
+                    <tr key={i} className="roster-row" style={{borderBottom:'1px solid var(--border)'}}>
+                      <td data-label="Name" style={{padding:'6px 6px'}}><input value={c.name} onChange={e=>updCrew(i,'name',e.target.value)} style={col} placeholder="Full name" /></td>
+                      <td data-label="Role" style={{padding:'6px 6px'}}><input value={c.role||''} onChange={e=>updCrew(i,'role',e.target.value)} style={col} placeholder="Operator, Laborer…" /></td>
+                      <td data-label="Phone" style={{padding:'6px 6px'}}><input value={c.phone||''} onChange={e=>updCrew(i,'phone',e.target.value)} style={col} placeholder="Phone" /></td>
+                      <td data-label="Active" style={{padding:'6px 6px',textAlign:'center'}}><input type="checkbox" checked={c.active} onChange={e=>updCrew(i,'active',e.target.checked)} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -106,15 +106,15 @@ function RosterModal({ onClose }) {
           )}
           {tab==='equipment' && (
             <>
-              <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <table className="roster-table" style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead><tr>{['Name / Description','Type','Unit #','Active'].map(h=><th key={h} style={{padding:'6px 8px',textAlign:'left',fontSize:10,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.08em',borderBottom:'1px solid var(--border)'}}>{h}</th>)}</tr></thead>
                 <tbody>
                   {equipment.map((e,i)=>(
-                    <tr key={i} style={{borderBottom:'1px solid var(--border)'}}>
-                      <td style={{padding:'6px 6px'}}><input value={e.name} onChange={x=>updEquip(i,'name',x.target.value)} style={col} placeholder="Cat 336 Excavator…" /></td>
-                      <td style={{padding:'6px 6px'}}><input value={e.type||''} onChange={x=>updEquip(i,'type',x.target.value)} style={col} placeholder="Excavator, Dozer…" /></td>
-                      <td style={{padding:'6px 6px'}}><input value={e.unit_number||''} onChange={x=>updEquip(i,'unit_number',x.target.value)} style={col} placeholder="Unit #" /></td>
-                      <td style={{padding:'6px 6px',textAlign:'center'}}><input type="checkbox" checked={e.active} onChange={x=>updEquip(i,'active',x.target.checked)} /></td>
+                    <tr key={i} className="roster-row" style={{borderBottom:'1px solid var(--border)'}}>
+                      <td data-label="Name / Description" style={{padding:'6px 6px'}}><input value={e.name} onChange={x=>updEquip(i,'name',x.target.value)} style={col} placeholder="Cat 336 Excavator…" /></td>
+                      <td data-label="Type" style={{padding:'6px 6px'}}><input value={e.type||''} onChange={x=>updEquip(i,'type',x.target.value)} style={col} placeholder="Excavator, Dozer…" /></td>
+                      <td data-label="Unit #" style={{padding:'6px 6px'}}><input value={e.unit_number||''} onChange={x=>updEquip(i,'unit_number',x.target.value)} style={col} placeholder="Unit #" /></td>
+                      <td data-label="Active" style={{padding:'6px 6px',textAlign:'center'}}><input type="checkbox" checked={e.active} onChange={x=>updEquip(i,'active',x.target.checked)} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -579,8 +579,8 @@ export default function WeeklySchedule() {
       {showRoster && <RosterModal onClose={() => { setShowRoster(false); reload(); }} />}
 
       {/* Header controls */}
-      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap'}}>
-        <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:20,flex:1}}>Weekly Schedule</div>
+      <div className="ws-head" style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap'}}>
+        <div className="ws-title" style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:20,flex:1}}>Weekly Schedule</div>
         <button onClick={()=>setShowRoster(true)} style={{padding:'7px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:6,color:'var(--muted)',fontFamily:'var(--font-mono)',fontSize:11,cursor:'pointer'}}
           onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--accent)';e.currentTarget.style.color='var(--accent)';}}
           onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.color='var(--muted)';}}>
@@ -597,12 +597,12 @@ export default function WeeklySchedule() {
           <div style={{fontSize:13}}>Create a project in the Projects tab to get started.</div>
         </div>
       ) : (
-        <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:20,alignItems:'start'}}>
+        <div className="ws-grid" style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:20,alignItems:'start'}}>
           {/* Project list sidebar */}
-          <div className="contour" style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',position:'sticky',top:70}}>
+          <div className="contour ws-projects" style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',position:'sticky',top:70}}>
             <div style={{padding:'10px 14px',borderBottom:'1px solid var(--border)',fontSize:10,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600}}>Projects</div>
             {activeProjects.map(p=>(
-              <button key={p.id} onClick={()=>setSelectedProject(p)} style={{
+              <button key={p.id} className="ws-project" aria-pressed={selectedProject?.id===p.id} onClick={()=>setSelectedProject(p)} style={{
                 width:'100%',textAlign:'left',padding:'10px 14px',background:selectedProject?.id===p.id?'var(--accent-light)':'none',
                 border:'none',borderBottom:'1px solid var(--border)',cursor:'pointer',
                 borderLeft:`3px solid ${selectedProject?.id===p.id?'var(--accent)':'transparent'}`,

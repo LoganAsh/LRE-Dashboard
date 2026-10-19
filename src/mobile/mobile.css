@@ -46,7 +46,7 @@
 .m-group-head { display: flex; align-items: center; gap: 7px; padding: 12px 14px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--border); }
 .m-group-head:first-child { border-top: 0; }
 .m-group-head.late { color: var(--lost); }
-.m-link { appearance: none; border: 0; background: none; padding: 6px 2px; font-size: 13px; font-weight: 600; color: var(--accent-text); cursor: pointer; }
+.m-link { appearance: none; border: 0; background: none; padding: 0 6px; min-height: 40px; display: inline-flex; align-items: center; margin: -10px -6px; font-size: 13.5px; font-weight: 600; color: var(--accent-text); cursor: pointer; }
 .m-empty { padding: 34px 20px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .m-empty b { display: block; color: var(--text-secondary); font-size: 15px; margin-bottom: 4px; }
 .m-loading { min-height: 55vh; display: grid; place-items: center; align-content: center; gap: 12px; color: var(--muted); font-size: 14px; }
@@ -111,7 +111,8 @@
 .m-sheet { width: 100%; max-width: 640px; max-height: 92dvh; display: flex; flex-direction: column; outline: none; background: var(--surface); color: var(--text); border-radius: 22px 22px 0 0; padding-bottom: var(--m-safe-b); transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .m-sheet[data-starting-style], .m-sheet[data-ending-style] { transform: translateY(100%); }
 .m-sheet-full { height: 92dvh; }
-.m-grip { flex: none; display: flex; justify-content: center; padding: 10px 0 8px; touch-action: none; cursor: grab; }
+.m-grip { flex: none; display: none; justify-content: center; padding: 10px 0 8px; touch-action: none; cursor: grab; }
+@media (max-width: 767px) { .m-grip { display: flex; } }   /* the handle only exists on phones */
 .m-grip span { width: 40px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--text) 20%, transparent); }
 .m-sheet-head { padding: 2px 20px 10px; }
 .m-sheet-title { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
@@ -184,3 +185,63 @@
 .m-app [data-open-window] .sov-table tr.sov-total td:empty { display: none; }
 .m-app [data-open-window] .sov-table td { border: 0 !important; }
 .m-app [data-open-window] .sov-table td.sov-category input { width: calc(100% - 46px) !important; }
+
+/* ── the app's existing pop-ups (Status window, client details, task editor) become phone bottom sheets ── */
+@media (max-width: 767px) {
+  [data-sheet-backdrop] { background: rgba(20, 16, 10, 0.46) !important; }
+  [data-sheet-viewport] { align-items: flex-end !important; justify-content: center !important; padding: 0 !important; }
+  [data-sheet-popup] {
+    width: 100% !important; max-width: 640px !important; height: auto !important; max-height: 92dvh !important;
+    border: 0 !important; border-radius: 22px 22px 0 0 !important; padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+  [data-sheet-popup][data-sheet-tall] { height: 92dvh !important; }
+  [data-sheet-popup][data-starting-style], [data-sheet-popup][data-ending-style] { transform: translateY(100%) !important; opacity: 1 !important; }
+  [data-sheet-popup] .m-grip { padding: 10px 0 2px; }
+  [data-sheet-popup] [aria-label="Close"] { width: 44px !important; height: 44px !important; }
+  [data-sheet-popup] input:not([type="checkbox"]):not([type="radio"]), [data-sheet-popup] textarea, [data-sheet-popup] select { font-size: 16px !important; min-height: 46px; }
+  [data-sheet-popup] textarea { min-height: 96px; }
+  [data-sheet-popup] [role="radio"] { min-height: 40px; padding-left: 12px !important; padding-right: 12px !important; border-radius: 20px !important; }
+  [data-sheet-popup] [role="radio"][aria-checked="true"] { background: var(--accent-soft) !important; }
+  [data-sheet-popup] [role="radiogroup"] { gap: 6px 8px !important; }
+  [data-sheet-popup] [role="checkbox"] { width: 26px !important; height: 26px !important; }
+  [data-sheet-foot] { padding-bottom: 14px !important; gap: 10px !important; }
+  [data-sheet-foot] button { min-height: 48px !important; font-size: 16px !important; border-radius: 14px !important; }
+  [data-sheet-foot] > div { flex: 1; } [data-sheet-foot] > div > button { flex: 1; }
+}
+@media (max-width: 767px) {
+  [data-sheet-foot] button { white-space: nowrap; font-size: 15px !important; padding-left: 14px !important; padding-right: 14px !important; }
+  [data-sheet-popup] [data-disposition-group] { flex: 1 1 100% !important; min-width: 0; }
+}
+
+/* ── Weekly Schedule: one column; the project list becomes a row of chips ── */
+.m-app .ws-title { display: none; }
+.m-app .ws-head { margin-bottom: 12px !important; }
+.m-app .ws-head > button { width: 100%; min-height: 46px; justify-content: center; font-size: 14px !important; border-radius: 12px !important; }
+.m-app .ws-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+.m-app .ws-projects { position: static !important; display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 4px; margin: 0 -16px; border: 0 !important; background: transparent !important; border-radius: 0 !important; scrollbar-width: none; }
+.m-app .ws-projects::before { display: none !important; }
+.m-app .ws-projects::-webkit-scrollbar { display: none; }
+.m-app .ws-projects > div:first-child { display: none; }
+.m-app .ws-project { flex: none; width: auto !important; max-width: 78vw; min-height: 44px; padding: 8px 16px !important; border: 1px solid var(--border) !important; border-radius: 22px !important; background: var(--surface) !important; color: var(--text-secondary) !important; }
+.m-app .ws-project[aria-pressed="true"] { background: var(--accent-soft) !important; border-color: transparent !important; color: var(--accent-text) !important; }
+.m-app .ws-project > div:last-child:not(:first-child) { display: none; }
+.m-app .ws-project > div { font-size: 14px !important; }
+
+/* screens that reuse the desktop components: same side margins as the rest of the app, and thumb-sized buttons */
+.m-app .page { padding: 0 !important; }
+.m-app .page button:not(.year-btn):not(.page-btn):not(.th-btn) { min-height: 40px; min-width: 44px; }
+.m-app .page input[type="checkbox"] { width: 22px; height: 22px; }
+.m-app [data-open-window] div:has(> input[placeholder^="Work description"]) { flex-wrap: wrap !important; }
+.m-app [data-open-window] input[placeholder^="Work description"] { flex: 1 1 100% !important; order: 3; }
+
+/* Roster & Equipment: each person / machine becomes a stacked card */
+.m-app [data-open-window] .roster-table, .m-app [data-open-window] .roster-table tbody { display: block; }
+.m-app [data-open-window] .roster-table thead { display: none; }
+.m-app [data-open-window] .roster-table tr.roster-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 4px; }
+.m-app [data-open-window] .roster-table td { display: block; padding: 0 !important; text-align: left !important; border: 0 !important; }
+.m-app [data-open-window] .roster-table td::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.m-app [data-open-window] .roster-table td:first-child { grid-column: 1 / -1; }
+.m-app [data-open-window] .roster-table td[data-label="Active"] { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; }
+.m-app [data-open-window] .roster-table td[data-label="Active"]::before { margin: 0; }
+.m-app [data-open-window] .roster-table input[type="checkbox"] { width: 24px; height: 24px; min-height: 0; }

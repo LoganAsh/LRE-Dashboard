@@ -10,7 +10,7 @@ import MDashboard from './MDashboard.jsx';
 import MBidLog from './MBidLog.jsx';
 import MCalendar from './MCalendar.jsx';
 import MProjects from './MProjects.jsx';
-import ClientDirectory from '../ClientDirectory.jsx';
+import MClients from './MClients.jsx';
 import Overview from '../Overview.jsx';
 import Trends from '../Trends.jsx';
 import Clients from '../Clients.jsx';
@@ -64,7 +64,7 @@ export default function MobileApp({
         {activeTab === 'Bid Log' && <MBidLog bids={bids} />}
         {activeTab === 'Calendar' && <MCalendar bids={bids} onNavigate={go} />}
         {activeTab === 'Projects' && <MProjects bids={bids} />}
-        {activeTab === 'Clients' && <ClientDirectory bids={bids} />}
+        {activeTab === 'Clients' && <MClients bids={bids} />}
         {activeTab === 'Client Analytics' && <Clients bids={bids} />}
         {activeTab === 'Overview' && <Overview bids={bids} yearFilter={yearFilter} setYearFilter={setYearFilter} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />}
         {activeTab === 'Trends' && <Trends bids={bids} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />}

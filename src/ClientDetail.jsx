@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+import { SheetGrip } from './mobile/Sheet.jsx';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from './supabase.js';
@@ -43,6 +44,7 @@ export default function ClientDetail({ clientName, bids, onBidSave, logo, busy, 
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [modalBid, setModalBid] = useState(null);
   const fileRef = useRef(null);
+  const popupRef = useRef(null);       // for the phone's swipe-down-to-close handle
 
   useEffect(() => {
     let alive = true;
@@ -66,15 +68,16 @@ export default function ClientDetail({ clientName, bids, onBidSave, logo, busy, 
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-[200] bg-black/30 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
-        <Dialog.Viewport className="fixed inset-0 z-[200] flex items-center justify-center p-4 max-sm:p-0">
-          <Dialog.Popup
+        <Dialog.Backdrop data-sheet-backdrop className="fixed inset-0 z-[200] bg-black/30 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
+        <Dialog.Viewport data-sheet-viewport className="fixed inset-0 z-[200] flex items-center justify-center p-4 max-sm:p-0">
+          <Dialog.Popup ref={popupRef} data-sheet-popup data-sheet-tall
             className={cn(
               'flex w-full max-w-[760px] flex-col overflow-hidden border border-[color:var(--border)] bg-[var(--card)] text-[var(--text)] outline-none',
               'sm:max-h-[90vh] sm:rounded-2xl max-sm:h-[100dvh] max-sm:rounded-none max-sm:border-0',
               'transition-[opacity,transform] duration-150 data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0 data-[ending-style]:opacity-0'
             )}
           >
+            <SheetGrip popupRef={popupRef} onClose={onClose} className="md:hidden" />
             {/* Header */}
             <div className="flex shrink-0 items-center gap-4 border-b border-[color:var(--border)] px-6 py-4">
               <ClientLogo name={clientName} logo={logo} size={60} />

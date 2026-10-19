@@ -7,6 +7,7 @@ const JOBS = ['USPS SLC Site Demo & Utilities - EV Infrastructure', 'MCSD Apex C
 const NOTES = ['Waiting on addendum 2', 'Called GC, they like our number', 'Need to confirm dewatering scope', 'Follow up Friday', '', '', '', 'Pipe supplier quote expires soon'];
 
 export function makeBids() {
+  seed = 7;                                  // same sample data every time
   const bids = []; let id = 100;
   const add = (o) => {
     const amount = Math.round((150 + rnd() * 2400) / 5) * 5000;
@@ -52,5 +53,21 @@ export function makeTasks() {
 }
 // fixed at 11:40 today so screenshots are identical from run to run
 const syncAt = new Date(); syncAt.setHours(11, 40, 0, 0);
+export function makeWeekly() {
+  const monday = () => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
+  const iso = (d) => { const p = (x) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+  const m1 = monday(), m2 = new Date(m1); m2.setDate(m2.getDate() + 7);
+  const crew = [{ id: 1, name: 'M. Ortiz', role: 'Foreman', phone: '801-555-0142', active: true }, { id: 2, name: 'D. Cole', role: 'Operator', phone: '801-555-0177', active: true }, { id: 3, name: 'S. Park', role: 'Laborer', phone: null, active: true }];
+  const equipment = [{ id: 1, name: 'CAT 320 Excavator', type: 'Excavator', unit_number: 'EX-12', active: true }, { id: 2, name: 'Volvo A30 Haul Truck', type: 'Truck', unit_number: 'HT-04', active: true }];
+  const plans = [{ id: 1, project_id: 1, week_start: iso(m1), foreman: 'M. Ortiz', notes: 'Call 811 before any digging. Inspector on site Thursday.' }, { id: 2, project_id: 1, week_start: iso(m2), foreman: 'M. Ortiz', notes: null }];
+  const items = [
+    { id: 1, plan_id: 1, sort_order: 0, sov_category: 'Utility Demo', description: 'Cut and cap the old water service', notes: null, lre_plan_checklist: [{ id: 1, work_item_id: 1, sort_order: 0, description: 'Pothole to confirm depth', completed: true }, { id: 2, work_item_id: 1, sort_order: 1, description: 'Shut-off notice to the owner', completed: false }] },
+    { id: 2, plan_id: 1, sort_order: 1, sov_category: 'Earthwork/Grading', description: 'Rough grade the east pad', notes: 'Watch the overhead line', lre_plan_checklist: [] },
+    { id: 3, plan_id: 2, sort_order: 0, sov_category: 'Storm Drain', description: 'Set 18-inch RCP from MH-3 to MH-4', notes: null, lre_plan_checklist: [] },
+  ];
+  const planCrew = [{ id: 1, plan_id: 1, crew_id: 1, role_override: null, lre_crew: crew[0] }, { id: 2, plan_id: 1, crew_id: 2, role_override: 'Excavator Operator', lre_crew: crew[1] }, { id: 3, plan_id: 1, crew_id: 3, role_override: null, lre_crew: crew[2] }];
+  const planEquip = [{ id: 1, plan_id: 1, equipment_id: 1, lre_equipment: equipment[0], lre_projects: { name: 'USPS SLC Site Demo & Utilities - EV Infrastructure' } }, { id: 2, plan_id: 1, equipment_id: 2, lre_equipment: equipment[1], lre_projects: null }];
+  return { lre_weekly_plans: plans, lre_plan_work_items: items, lre_plan_crew: planCrew, lre_plan_equipment: planEquip, lre_crew: crew, lre_equipment: equipment, lre_sov: [{ project_id: 1, category: 'Utility Demo' }, { project_id: 1, category: 'Earthwork/Grading' }, { project_id: 1, category: 'Storm Drain' }] };
+}
 export const SYNC_LOG = [{ id: 1, synced_at: syncAt.toISOString(), status: 'success', rows_upserted: 396, message: 'ok' }];
 export { day };

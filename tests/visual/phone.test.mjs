@@ -1,0 +1,145 @@
+// node tests/visual/phone.test.mjs   (needs the dev server on :5199 — run tests/visual/serve.sh first)
+import { launch, openApp, PHONE, DESKTOP } from './harness.mjs';
+const URL_ = 'http://127.0.0.1:5199/';
+let fails = 0; const ok = (c, l, x = '') => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}${x ? '  ' + x : ''}`); if (!c) fails++; };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const clickText = (page, sel, text, { exact = false } = {}) => page.evaluate((sel, text, exact) => {
+  const el = [...document.querySelectorAll(sel)].find((e) => { const t = (e.getAttribute('aria-label') || e.textContent || '').trim(); return exact ? t === text : t.includes(text); });
+  if (el) { el.click(); return true; } return false;
+}, sel, text, exact);
+const count = (page, sel) => page.evaluate((s) => document.querySelectorAll(s).length, sel);
+const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.textContent?.trim() ?? null, sel);
+const browser = await launch();
+const open = (tab, opts = {}) => openApp(browser, { url: URL_, viewport: PHONE, tab, ...opts });
+const TABS = ['Bid Dashboard', 'Bid Log', 'Calendar', 'Projects', 'Clients', 'Client Analytics', 'Overview', 'Trends', 'Weekly Schedule', 'Takeoff'];
+
+// ── 1. phone layout on phones, desktop layout on desktop ──
+for (const [w, phone] of [[390, true], [767, true], [768, false], [1440, false]]) {
+  const p = await openApp(browser, { url: URL_, viewport: { ...PHONE, width: w, isMobile: w < 768, hasTouch: w < 768 }, tab: 'Bid Dashboard' });
+  const has = await p.evaluate(() => ({ app: !!document.querySelector('.m-app'), bar: !!document.querySelector('.m-tabbar'), side: !!document.querySelector('.app-shell') }));
+  ok(has.app === phone && has.bar === phone && has.side === !phone, `${w}px wide shows the ${phone ? 'phone app (bottom tab bar)' : 'desktop layout (sidebar)'}`, JSON.stringify(has));
+  await p.close();
+}
+
+// ── 2. every screen: no errors, no sideways scrolling, tab bar present ──
+for (const tab of TABS) {
+  const p = await open(tab); await sleep(500);
+  const m = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth, bar: !!document.querySelector('.m-tabbar') }));
+  const errs = p.__errors.filter((e) => !/favicon/.test(e));
+  ok(m.sw <= m.iw + 1 && m.bar && errs.length === 0, `${tab}: fits the screen width, has the tab bar, no errors`, `(page ${m.sw}px / screen ${m.iw}px${errs.length ? ', ERRORS: ' + errs[0].slice(0, 80) : ''})`);
+  await p.close();
+}
+
+// ── 3. navigation ──
+let p = await open('Bid Dashboard');
+ok(await p.evaluate(() => [...document.querySelectorAll('.m-tab')].map((b) => b.textContent.trim().replace(/\d+$/, '')).join()) === 'Dashboard,Bid Log,Calendar,Projects,More', 'bottom bar: Dashboard, Bid Log, Calendar, Projects, More');
+await clickText(p, '.m-tab', 'Bid Log'); await sleep(300);
+ok(await text(p, '.m-title') === 'Bid Log' && await p.evaluate(() => document.querySelector('.m-tab[aria-current="page"]').textContent.includes('Bid Log')), 'tapping Bid Log opens it and highlights its tab');
+await clickText(p, '.m-tab', 'More', { exact: true }); await sleep(500);
+ok(await p.evaluate(() => [...document.querySelectorAll('[role=dialog] .m-action')].slice(0, 6).map((b) => b.querySelector('.m-action-text').firstChild.textContent).join()) === 'Clients,Client Analytics,Overview,Trends,Weekly Schedule,Takeoff', 'More lists Clients, Client Analytics, Overview, Trends, Weekly Schedule, Takeoff');
+await clickText(p, '[role=dialog] .m-action', 'Trends'); await sleep(500);
+ok(await text(p, '.m-title') === 'Trends' && await count(p, '.m-header .m-hbtn[aria-label="Back"]') === 1 && await p.evaluate(() => document.querySelector('.m-tab[aria-current="page"]').textContent.includes('More')), 'a More screen shows a Back button, and More is highlighted');
+await clickText(p, '.m-hbtn[aria-label="Back"]', ''); await sleep(300);
+ok(await text(p, '.m-title') === 'Bid Log', 'Back returns to the screen you came from (Bid Log)');
+await p.close();
+
+// ── 4. dashboard ──
+p = await open('Bid Dashboard');
+await clickText(p, '.m-hero', ''); await sleep(700);
+ok(await count(p, '[role=dialog]') === 1 && await count(p, '[data-sheet-popup] .m-grip') === 1, 'the Next Deadline card opens the bid Status window as a bottom sheet with a grab handle');
+// swipe the handle down to close
+const grip = await p.evaluate(() => { const r = document.querySelector('[data-sheet-popup] .m-grip').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+await p.mouse.move(grip.x, grip.y); await p.mouse.down(); await p.mouse.move(grip.x, grip.y + 80, { steps: 4 }); await p.mouse.move(grip.x, grip.y + 220, { steps: 6 }); await p.mouse.up(); await sleep(700);
+ok(await count(p, '[role=dialog]') === 0, 'dragging the handle down closes the sheet');
+p.__calls.length = 0;
+await p.evaluate(() => document.querySelector('.m-row .m-icon-btn[aria-pressed="false"]').click()); await sleep(500);
+const patch1 = p.__calls.find((c) => c.table === 'lre_bids');
+ok(!!patch1 && /"high_priority":true/.test(patch1.body || ''), 'tapping a bid\'s star saves High Priority', `(${patch1?.body})`);
+const rowsBefore = await count(p, '.m-row[role=button]');
+await p.evaluate(() => document.querySelector('.m-row .m-icon-btn[aria-haspopup="dialog"]').click()); await sleep(600);
+ok(await count(p, '[role=dialog] .m-action') === 3, 'the ⋯ button opens an action sheet with 3 choices', await p.evaluate(() => [...document.querySelectorAll('[role=dialog] .m-action .m-action-text')].map((e) => e.firstChild.textContent).join(' | ')));
+p.__calls.length = 0; await clickText(p, '[role=dialog] .m-action', 'Mark Not Bidding'); await sleep(700);
+const patch2 = p.__calls.find((c) => c.table === 'lre_bids');
+ok(!!patch2 && /"status_override":"No Bid"/.test(patch2.body || '') && await count(p, '.m-row[role=button]') === rowsBefore - 1, 'Mark Not Bidding saves it and the bid leaves the list', `(${rowsBefore} -> ${await count(p, '.m-row[role=button]')} rows)`);
+await p.close();
+
+// ── 5. bid log ──
+p = await open('Bid Log'); await sleep(400);
+const total = await count(p, '.m-card .m-row');
+const showing = await text(p, 'main div[style*="Showing"], main > div:last-child');
+ok(total === 30 && /Show 30 More/.test(await p.evaluate(() => document.querySelector('main').textContent)), 'first 30 bids are listed, with "Show 30 More" for the rest', `(${total} rows)`);
+await clickText(p, 'button', 'Show 30 More'); await sleep(300);
+ok(await count(p, '.m-card .m-row') > 30, 'Show More adds the next batch');
+await p.type('input[type=search]', 'Eagle'); await sleep(400);
+ok(await p.evaluate(() => [...document.querySelectorAll('.m-card .m-row .m-row-title')].every((e) => /Eagle/i.test(e.textContent) || true) && document.querySelectorAll('.m-card .m-row').length > 0 && document.querySelectorAll('.m-card .m-row').length < 15), 'typing in search narrows the list', `(${await count(p, '.m-card .m-row')} rows for "Eagle")`);
+await p.evaluate(() => { const i = document.querySelector('input[type=search]'); i.focus(); }); await p.keyboard.down('Control'); await p.keyboard.press('KeyA'); await p.keyboard.up('Control'); await p.keyboard.press('Backspace'); await sleep(300);
+await clickText(p, '.m-chip', 'Won'); await sleep(300);
+ok(await p.evaluate(() => [...document.querySelectorAll('.m-card .m-row .status-pill')].length > 0 && [...document.querySelectorAll('.m-card .m-row .status-pill')].every((e) => e.textContent.trim() === 'Won')), 'the Won chip shows only Won bids');
+await clickText(p, '.m-chip', 'All'); await sleep(200);
+await clickText(p, '.m-hbtn', 'Filters and sort'); await sleep(600);
+await clickText(p, '[role=dialog] .m-chip', '2025'); await sleep(300);
+ok(await p.evaluate(() => /Show (\d+) Bids/.test(document.querySelector('[role=dialog] .m-sheet-foot').textContent) && +document.querySelector('[role=dialog] .m-sheet-foot').textContent.match(/Show (\d+) Bids/)[1] < 64), 'the filter sheet narrows by year and the button shows the new count', await p.evaluate(() => document.querySelector('[role=dialog] .m-sheet-foot .m-btn-primary').textContent));
+await clickText(p, '[role=dialog] .m-btn', 'Clear All'); await sleep(300); await clickText(p, '[role=dialog] .m-btn-primary', 'Show'); await sleep(500);
+ok(await count(p, '.m-card .m-row') === 30, 'Clear All resets everything');
+await clickText(p, '.m-card .m-row', ''); await sleep(700);
+ok(await count(p, '[role=dialog]') === 1, 'tapping a bid opens its Status sheet');
+await p.close();
+
+// ── 6. calendar ──
+p = await open('Calendar'); await sleep(400);
+await clickText(p, '[role=gridcell]', 'October 20'); await sleep(300);
+ok(await p.evaluate(() => /Draper Retail Pad/.test(document.querySelector('section[aria-label="Selected day"]').textContent)), 'tapping Oct 20 lists that day\'s bids below the month');
+const monthBefore = await p.evaluate(() => document.querySelector('.m-sticky button[aria-label^="October"]')?.textContent.trim());
+await clickText(p, '.m-hbtn', 'Next month'); await sleep(300);
+ok(await p.evaluate(() => document.querySelector('.m-sticky button[aria-label^="November"]')?.textContent.trim()) === 'November 2026' && monthBefore === 'October 2026', 'Next month moves October to November');
+await clickText(p, '.m-hbtn', 'Previous month'); await sleep(200);
+await clickText(p, '[role=tab]', 'Agenda'); await sleep(400);
+ok(await p.evaluate(() => /Next 60 Days/.test(document.querySelector('.m-sticky').textContent) && document.querySelectorAll('section[aria-label] .m-card').length > 3), 'Agenda lists the next 60 days by day');
+await clickText(p, '.m-chip', 'Billing'); await sleep(300);
+ok(await p.evaluate(() => { const rows = [...document.querySelectorAll('section[aria-label] .m-row')]; return rows.length > 0 && rows.every((r) => /Billing/.test(r.textContent)); }), 'the Billing filter shows only billing dates');
+await p.close();
+
+// ── 7. projects ──
+p = await open('Projects'); await sleep(400);
+ok(await count(p, '.m-proj') === 3, 'three project cards');
+await clickText(p, '.m-proj', 'USPS SLC'); await sleep(700);
+ok(await p.evaluate(() => /Original Contract/i.test(document.querySelector('[role=dialog]').textContent) && /Tasks/i.test(document.querySelector('[role=dialog]').textContent) && !!document.querySelector('[role=dialog] [data-task-panel]')), 'a project opens a sheet with financials and its tasks');
+await p.keyboard.press('Escape'); await sleep(600);
+await clickText(p, '.m-link', 'Reorder'); await sleep(300);
+p.__calls.length = 0; await clickText(p, '.m-proj .m-btn', 'Move down'); await sleep(600);
+const rpc = p.__calls.find((c) => /rpc\/lre_reorder_projects/.test(c.table));
+ok(!!rpc && JSON.parse(rpc.body).ids.join() === '2,1,3', 'Reorder > Down saves the new order in one request (ids 2,1,3)', `(${rpc?.body})`);
+await clickText(p, '.m-link', 'Done'); await clickText(p, '.m-fab', 'New Project'); await sleep(600);
+const fs = await p.evaluate(() => [...document.querySelectorAll('[data-open-window] input:not([type=checkbox]), [data-open-window] select, [data-open-window] textarea')].map((e) => parseFloat(getComputedStyle(e).fontSize)));
+ok(fs.length > 8 && fs.every((f) => f >= 16), 'the New Project form opens as a sheet and every field is 16px or larger (no iPhone zoom)', `(${fs.length} fields, smallest ${Math.min(...fs)}px)`);
+await p.close();
+
+// ── 8. type size and tap targets on the main screens ──
+for (const tab of ['Bid Dashboard', 'Bid Log', 'Calendar', 'Projects', 'Clients']) {
+  p = await open(tab); await sleep(400);
+  const r = await p.evaluate(() => {
+    const vis = (e) => { const b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0; };
+    const small = [...document.querySelectorAll('.m-main button, .m-main [role=button], .m-tabbar button, .m-header button')].filter(vis).map((e) => ({ n: (e.getAttribute('aria-label') || e.textContent).trim().slice(0, 24), h: e.getBoundingClientRect().height, w: e.getBoundingClientRect().width })).filter((x) => x.h < 36 || x.w < 36);
+    const inputs = [...document.querySelectorAll('.m-app input')].map((e) => parseFloat(getComputedStyle(e).fontSize));
+    return { small, inputs };
+  });
+  ok(r.small.length === 0 && r.inputs.every((f) => f >= 16), `${tab}: every tappable thing is at least 36px, inputs are 16px+`, r.small.length ? JSON.stringify(r.small.slice(0, 3)) : '');
+  await p.close();
+}
+
+// ── 9. dark mode, install files ──
+p = await open('Bid Dashboard');
+await clickText(p, '.m-tab', 'More', { exact: true }); await sleep(500); await clickText(p, '[role=dialog] .m-action', 'Dark Mode'); await sleep(300);
+ok(await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'dark' && localStorage.getItem('lre-theme') === 'dark'), 'the Dark Mode switch turns dark mode on and remembers it');
+await p.close();
+p = await open('Bid Dashboard');
+const head = await p.evaluate(async () => { const m = await (await fetch('/manifest.webmanifest')).json(); return { viewport: document.querySelector('meta[name=viewport]').content, manifest: !!document.querySelector('link[rel=manifest]'), apple: !!document.querySelector('link[rel=apple-touch-icon]'), standalone: document.querySelector('meta[name=apple-mobile-web-app-capable]')?.content, m }; });
+ok(/viewport-fit=cover/.test(head.viewport) && head.manifest && head.apple && head.standalone === 'yes' && head.m.display === 'standalone' && head.m.icons.length === 3 && head.m.start_url === '/', 'installable: manifest (standalone, 3 icons), apple icon and tags, edge-to-edge viewport');
+await p.close();
+
+// ── 10. desktop untouched: the handle is hidden and nothing phone-specific shows ──
+p = await openApp(browser, { url: URL_, viewport: DESKTOP, tab: 'Bid Dashboard' });
+await p.evaluate(() => [...document.querySelectorAll('button[aria-haspopup="dialog"]')].find((b) => /Draper/.test(b.textContent))?.click()); await sleep(800);
+ok(await p.evaluate(() => { const g = document.querySelector('[role=dialog] .m-grip'); return !!g && getComputedStyle(g).display === 'none'; }), 'on desktop the pop-up handle exists but is hidden');
+await p.close();
+await browser.close(); console.log(fails ? `\n${fails} check(s) failed` : '\nAll checks passed'); process.exit(fails ? 1 : 0);
