@@ -87,11 +87,12 @@ await p.close();
 
 // ── 6. calendar ──
 p = await open('Calendar'); await sleep(400);
-await clickText(p, '[role=gridcell]', 'October 20'); await sleep(300);
-ok(await p.evaluate(() => /Draper Retail Pad/.test(document.querySelector('section[aria-label="Selected day"]').textContent)), 'tapping Oct 20 lists that day\'s bids below the month');
-const monthBefore = await p.evaluate(() => document.querySelector('.m-sticky button[aria-label^="October"]')?.textContent.trim());
+const labels = await p.evaluate(() => { const f = (d, o) => d.toLocaleDateString('en-US', o); const t = new Date(); const tm = new Date(t); tm.setDate(t.getDate() + 1); const nm = new Date(t.getFullYear(), t.getMonth() + 1, 1); return { tomorrow: f(tm, { weekday: 'long', month: 'long', day: 'numeric' }), thisMonth: f(t, { month: 'long', year: 'numeric' }), nextMonth: f(nm, { month: 'long', year: 'numeric' }) }; });
+await clickText(p, '[role=gridcell]', labels.tomorrow); await sleep(300);
+ok(await p.evaluate(() => { const s = document.querySelector('section[aria-label="Selected day"]'); return s.querySelectorAll('.m-row').length >= 1 && /Bid Due/.test(s.textContent); }), "tapping tomorrow's date lists that day's bids below the month", `(${labels.tomorrow})`);
+const monthBefore = await p.evaluate(() => document.querySelector('.m-sticky button[aria-label*=". Go to today"]')?.textContent.trim());
 await clickText(p, '.m-hbtn', 'Next month'); await sleep(300);
-ok(await p.evaluate(() => document.querySelector('.m-sticky button[aria-label^="November"]')?.textContent.trim()) === 'November 2026' && monthBefore === 'October 2026', 'Next month moves October to November');
+ok(await p.evaluate(() => document.querySelector('.m-sticky button[aria-label*=". Go to today"]')?.textContent.trim()) === labels.nextMonth && monthBefore === labels.thisMonth, `Next month moves ${labels.thisMonth} to ${labels.nextMonth}`);
 await clickText(p, '.m-hbtn', 'Previous month'); await sleep(200);
 await clickText(p, '[role=tab]', 'Agenda'); await sleep(400);
 ok(await p.evaluate(() => /Next 60 Days/.test(document.querySelector('.m-sticky').textContent) && document.querySelectorAll('section[aria-label] .m-card').length > 3), 'Agenda lists the next 60 days by day');
