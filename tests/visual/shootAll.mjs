@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { launch, openApp, shot, PHONE, DESKTOP } from './harness.mjs';
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > -1 ? (process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : true) : d; };
-const viewport = arg('viewport', 'phone') === 'desktop' ? DESKTOP : PHONE; const out = arg('out', '/tmp/shots'); const dark = !!arg('dark', false);
+const viewport = arg('width', '') ? { width: +arg('width'), height: +arg('height', 900), deviceScaleFactor: 1 } : (arg('viewport', 'phone') === 'desktop' ? DESKTOP : PHONE); const out = arg('out', '/tmp/shots'); const dark = !!arg('dark', false);
 const TABS = ['Bid Dashboard', 'Calendar', 'Overview', 'Trends', 'Clients', 'Client Analytics', 'Bid Log', 'Projects', 'Weekly Schedule', 'Takeoff'];
 const base = String(arg('url', 'http://127.0.0.1:5199/'));
 const tabs = arg('tabs', '') ? String(arg('tabs')).split(',') : TABS;
