@@ -9,13 +9,25 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="LRE Bids" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      // Apply the saved theme before anything paints. The page's own theme AND the phone's status-bar color
+      // (iPhones read that color once, when the app launches, so it has to be right from the start).
+      (function () {
+        try {
+          var t = localStorage.getItem('lre-theme') || 'light';
+          document.documentElement.setAttribute('data-theme', t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'dark' ? '#14120f' : '#faf8f5');
+        } catch (e) { /* storage blocked: the app falls back to light */ }
+      })();
+    </script>
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>LRE Bid Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-DwzVXejI.js"></script>
+    <script type="module" crossorigin src="/assets/index-BnfNI2Q0.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BUtCQMxH.css">
   </head>
   <body>

@@ -133,6 +133,27 @@ p = await open('Bid Dashboard');
 await clickText(p, '.m-tab', 'More', { exact: true }); await sleep(500); await clickText(p, '[role=dialog] .m-action', 'Dark Mode'); await sleep(300);
 ok(await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'dark' && localStorage.getItem('lre-theme') === 'dark'), 'the Dark Mode switch turns dark mode on and remembers it');
 await p.close();
+// ── status-bar color: right from the first moment (iPhones read it once, at launch), and swapped cleanly on toggle ──
+async function bareLoad(saved) {     // load the page with the app's own code blocked, so only the <head> script can have run
+  const pg = await browser.newPage(); await pg.setViewport(PHONE);
+  await pg.evaluateOnNewDocument((v) => { try { if (v) localStorage.setItem('lre-theme', v); else localStorage.removeItem('lre-theme'); } catch {} }, saved);
+  await pg.setRequestInterception(true);
+  pg.on('request', (r) => { const u = r.url(); if (/\/src\/main\.jsx|supabase\.co|fonts\.(googleapis|gstatic)/.test(u)) return r.abort(); r.continue(); });
+  await pg.goto(URL_, { waitUntil: 'domcontentloaded', timeout: 30000 }); await sleep(400);
+  const r = await pg.evaluate(() => ({ color: document.querySelector('meta[name="theme-color"]')?.content, theme: document.documentElement.getAttribute('data-theme'), app: !!document.querySelector('.m-app') }));
+  await pg.close(); return r;
+}
+let bare = await bareLoad('dark');
+ok(bare.color === '#14120f' && bare.theme === 'dark' && !bare.app, 'saved Dark: the status-bar color is already dark before the app code even runs', JSON.stringify(bare));
+bare = await bareLoad('light'); ok(bare.color === '#faf8f5' && bare.theme === 'light', 'saved Light: the status-bar color is the cream', JSON.stringify(bare));
+bare = await bareLoad(null); ok(bare.color === '#faf8f5' && bare.theme === 'light', 'nothing saved yet: starts Light, status bar cream', JSON.stringify(bare));
+p = await open('Bid Dashboard');
+const metas = () => p.evaluate(() => [...document.querySelectorAll('meta[name="theme-color"]')].map((m) => m.content));
+await clickText(p, '.m-tab', 'More', { exact: true }); await sleep(500); await clickText(p, '[role=dialog] .m-action', 'Dark Mode'); await sleep(300);
+let m1 = await metas(); ok(m1.length === 1 && m1[0] === '#14120f', 'toggling Dark Mode on leaves exactly one status-bar tag, and it is dark', JSON.stringify(m1));
+await clickText(p, '[role=dialog] .m-action', 'Dark Mode'); await sleep(300);
+m1 = await metas(); ok(m1.length === 1 && m1[0] === '#faf8f5', 'toggling it off swaps back to cream (still one tag)', JSON.stringify(m1));
+await p.close();
 p = await open('Bid Dashboard');
 const head = await p.evaluate(async () => { const m = await (await fetch('/manifest.webmanifest')).json(); return { viewport: document.querySelector('meta[name=viewport]').content, manifest: !!document.querySelector('link[rel=manifest]'), apple: !!document.querySelector('link[rel=apple-touch-icon]'), standalone: document.querySelector('meta[name=apple-mobile-web-app-capable]')?.content, m }; });
 ok(/viewport-fit=cover/.test(head.viewport) && head.manifest && head.apple && head.standalone === 'yes' && head.m.display === 'standalone' && head.m.icons.length === 3 && head.m.start_url === '/', 'installable: manifest (standalone, 3 icons), apple icon and tags, edge-to-edge viewport');

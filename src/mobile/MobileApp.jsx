@@ -46,9 +46,11 @@ export default function MobileApp({
 
   useEffect(() => { window.scrollTo(0, 0); }, [activeTab]);
   useEffect(() => {                       // keep the phone's status bar the same color as the app
-    let m = document.querySelector('meta[name="theme-color"]');
-    if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
-    m.content = theme === 'dark' ? '#14120f' : '#faf8f5';
+    // Swap in a fresh tag instead of editing the old one: iPhones notice a newly added tag more reliably.
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
+    const m = document.createElement('meta');
+    m.name = 'theme-color'; m.content = theme === 'dark' ? '#14120f' : '#faf8f5';
+    document.head.appendChild(m);
   }, [theme]);
 
   const go = (tab) => { setMoreOpen(false); setActiveTab(tab); };

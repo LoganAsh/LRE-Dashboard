@@ -9,6 +9,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="LRE Bids" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      // Apply the saved theme before anything paints. The page's own theme AND the phone's status-bar color
+      // (iPhones read that color once, when the app launches, so it has to be right from the start).
+      (function () {
+        try {
+          var t = localStorage.getItem('lre-theme') || 'light';
+          document.documentElement.setAttribute('data-theme', t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'dark' ? '#14120f' : '#faf8f5');
+        } catch (e) { /* storage blocked: the app falls back to light */ }
+      })();
+    </script>
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>LRE Bid Dashboard</title>
