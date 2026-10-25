@@ -4,6 +4,7 @@ import {
   LayoutDashboard, ListChecks, Moon, RefreshCw, Ruler, Sun, TrendingUp, Users,
 } from 'lucide-react';
 import './mobile.css';
+import { reloadPage } from '../reload.js';
 import Sheet from './Sheet.jsx';
 import { Loading } from './ui.jsx';
 import MDashboard from './MDashboard.jsx';
@@ -54,6 +55,18 @@ export default function MobileApp({
   }, [theme]);
 
   const go = (tab) => { setMoreOpen(false); setActiveTab(tab); };
+
+  // An installed iPhone app only reads the top-bar color when a page loads, never live. So in the installed app,
+  // switching the theme reloads it (landing back on the same screen); in a normal browser tab it updates instantly.
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    if (window.navigator.standalone === true) {
+      try { localStorage.setItem('lre-theme', next); sessionStorage.setItem('lre-return-tab', activeTab); } catch { /* storage blocked: the switch still works, the bar just waits for the next launch */ }
+      setMoreOpen(false);
+      setTimeout(reloadPage, 150);
+    }
+  };
   const subtitle = syncNote ? { text: syncNote.text, tone: syncNote.tone } : lastSync ? { text: `Synced ${lastSync}`, tone: '' } : null;
 
   let screen = null;
@@ -116,7 +129,7 @@ export default function MobileApp({
           ))}
         </div>
         <div className="m-group-label">Settings</div>
-        <button type="button" className="m-action" role="switch" aria-checked={theme === 'dark'} onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>
+        <button type="button" className="m-action" role="switch" aria-checked={theme === 'dark'} onClick={toggleTheme}>
           {theme === 'dark' ? <Moon strokeWidth={1.75} /> : <Sun strokeWidth={1.75} />}
           <span className="m-action-text">Dark Mode</span>
           <span className="m-switch" aria-checked={theme === 'dark'} />

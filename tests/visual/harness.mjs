@@ -17,17 +17,18 @@ export async function launch() {
 export function dataset() { return { bids: makeBids(), projects: makeProjects(), tasks: makeTasks(), weekly: makeWeekly() }; }
 
 // Open a page that talks to the stand-in database. `tab` picks the starting tab; `dark` picks the theme.
-export async function openApp(browser, { url, viewport = PHONE, tab, dark = false, data = dataset(), extra = {}, freeze = true }) {
+export async function openApp(browser, { url, viewport = PHONE, tab, dark = false, data = dataset(), extra = {}, freeze = true, initStorage = true, initScripts = [] }) {
   const page = await browser.newPage();
   await page.setViewport(viewport);
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' }]);
-  await page.evaluateOnNewDocument((tab, dark) => {
+  if (initStorage) await page.evaluateOnNewDocument((tab, dark) => {
     try { if (tab) sessionStorage.setItem('lre-return-tab', tab); localStorage.setItem('lre-theme', dark ? 'dark' : 'light'); } catch {}
   }, tab || null, dark);
   if (freeze) {   // the page's clock stands still at noon today, so countdowns and animations cannot cause false differences
     const noon = new Date(); noon.setHours(12, 0, 0, 0);
     await page.evaluateOnNewDocument((t) => { const R = Date; const F = class extends R { constructor(...a) { if (a.length === 0) super(t); else super(...a); } static now() { return t; } }; globalThis.Date = F; }, noon.getTime());
   }
+  for (const f of initScripts) await page.evaluateOnNewDocument(f);      // e.g. pretend the app is installed on an iPhone
   const calls = []; page.__calls = calls;
   await page.setRequestInterception(true);
   page.on('request', (req) => {

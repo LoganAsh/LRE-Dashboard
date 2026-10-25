@@ -154,6 +154,22 @@ let m1 = await metas(); ok(m1.length === 1 && m1[0] === '#14120f', 'toggling Dar
 await clickText(p, '[role=dialog] .m-action', 'Dark Mode'); await sleep(300);
 m1 = await metas(); ok(m1.length === 1 && m1[0] === '#faf8f5', 'toggling it off swaps back to cream (still one tag)', JSON.stringify(m1));
 await p.close();
+// ── the installed iPhone app only reads the top-bar color at page load, so the theme switch reloads it there ──
+async function themeSwitchRun(installed) {
+  const pg = await openApp(browser, { url: URL_, viewport: PHONE, initStorage: false, initScripts: [() => { try { if (!sessionStorage.getItem('__fresh')) { localStorage.clear(); sessionStorage.clear(); sessionStorage.setItem('__fresh', '1'); } } catch {} }, ...(installed ? [() => Object.defineProperty(navigator, 'standalone', { value: true, configurable: true })] : [])] });   // each run starts from clean storage (but is not wiped again by its own reload)
+  await sleep(400); await clickText(pg, '.m-tab', 'Bid Log'); await sleep(300);
+  await pg.evaluate(() => { window.__marker = 1; });
+  await clickText(pg, '.m-tab', 'More', { exact: true }); await pg.waitForFunction(() => document.querySelector('[role=dialog] .m-action[role=switch]'), { timeout: 10000 }); await sleep(300);
+  await clickText(pg, '[role=dialog] .m-action', 'Dark Mode');
+  if (installed) await sleep(3500); else await pg.waitForFunction(() => document.documentElement.getAttribute('data-theme') === 'dark', { timeout: 8000 }).catch(() => {});
+  const r = await pg.evaluate(() => ({ stillSamePage: window.__marker === 1, theme: document.documentElement.getAttribute('data-theme'), color: document.querySelector('meta[name="theme-color"]')?.content, title: document.querySelector('.m-title')?.textContent, saved: localStorage.getItem('lre-theme'), sheetOpen: !!document.querySelector('[role=dialog]') }));
+  await pg.close(); return r;
+}
+let sw = await themeSwitchRun(true);
+ok(!sw.stillSamePage && sw.theme === 'dark' && sw.color === '#14120f' && sw.saved === 'dark', 'installed app: switching to dark reloads the app, which comes back dark with a dark top-bar color', JSON.stringify(sw));
+ok(sw.title === 'Bid Log' && !sw.sheetOpen, 'and it lands back on the same screen (Bid Log) with the menu closed');
+sw = await themeSwitchRun(false);
+ok(sw.stillSamePage && sw.theme === 'dark' && sw.color === '#14120f', 'in a normal browser tab there is no reload: it switches instantly and the color follows', JSON.stringify(sw));
 p = await open('Bid Dashboard');
 const head = await p.evaluate(async () => { const m = await (await fetch('/manifest.webmanifest')).json(); return { viewport: document.querySelector('meta[name=viewport]').content, manifest: !!document.querySelector('link[rel=manifest]'), apple: !!document.querySelector('link[rel=apple-touch-icon]'), standalone: document.querySelector('meta[name=apple-mobile-web-app-capable]')?.content, m }; });
 ok(/viewport-fit=cover/.test(head.viewport) && head.manifest && head.apple && head.standalone === 'yes' && head.m.display === 'standalone' && head.m.icons.length === 3 && head.m.start_url === '/', 'installable: manifest (standalone, 3 icons), apple icon and tags, edge-to-edge viewport');
