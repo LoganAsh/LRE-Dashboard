@@ -38,3 +38,6 @@ export function groupOf(bid, today) {
   return weeksOut <= 0 ? 'this' : weeksOut === 1 ? 'next' : 'later';
 }
 
+
+// "1:00 PM" -> "1 PM" (keeps "10:30 AM"): saves room on the compact phone lines
+export const shortTime = (t) => (t || '').replace(/:00(?=\s*[AP]M)/i, '');

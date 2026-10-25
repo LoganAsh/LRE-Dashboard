@@ -79,20 +79,19 @@ export default function MBidLog({ bids: initialBids }) {
         {filtered.slice(0, shown).map((b) => {
           const eff = b.effective_status || b.status;
           return (
-            <button key={b.id} type="button" className="m-row" onClick={() => setModalBid(b)} aria-haspopup="dialog" aria-label={`${b.name}, ${eff}`}>
+            <button key={b.id} type="button" className="m-row compact" onClick={() => setModalBid(b)} aria-haspopup="dialog" aria-label={`${b.name}, ${eff}`}>
               <DateBlock iso={b.bid_date} tone={toneOf(b)} />
               <div className="m-row-main">
-                <div className="m-row-title">{b.name}</div>
-                <div className="m-row-sub">
-                  <span className="t">{clientsOf(b).join(', ')}</span>
-                  {b.high_priority && <Star size={13} fill="#d99a06" color="#d99a06" aria-label="High priority" />}
-                  {b.user_notes && <StickyNote size={13} aria-label="Has notes" />}
-                  {b.next_followup_date && <BellRing size={13} aria-label="Follow-up set" />}
+                <div className="m-row-titleline">
+                  <span className="m-row-title">{b.name}</span>
+                  {b.high_priority && <Star size={12} fill="#d99a06" color="#d99a06" aria-label="High priority" />}
+                  {b.user_notes && <StickyNote size={12} aria-label="Has notes" />}
+                  {b.next_followup_date && <BellRing size={12} aria-label="Follow-up set" />}
                 </div>
-                <div className="m-row-meta">
+                <div className="m-row-line">
                   <span className={`status-pill ${classifyStatus(eff)}`}>{eff}</span>
                   {b.bid_amount > 0 && <span>{fmt$(b.bid_amount)}</span>}
-                  {b.bid_time && <span>{b.bid_time}</span>}
+                  <span className="t">{clientsOf(b).join(', ')}</span>
                 </div>
               </div>
               <ChevronRight size={18} style={{ color: 'var(--muted)', opacity: 0.55, flex: 'none', marginRight: 6 }} aria-hidden="true" />

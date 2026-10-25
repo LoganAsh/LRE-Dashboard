@@ -6,7 +6,7 @@ import { getUpcomingBids, getUpcomingPreBids } from '../bidSelectors.js';
 import { StatusModal } from '../StatusModal.jsx';
 import { startOfToday, daysUntil, dateAtTime, fmtDate } from '../dates.js';
 import { useBillingProjects, nextBillingDate, billingLabel } from '../projectBilling.js';
-import { clientsOf, urgencyOf, countdown, byDueDate, GROUPS, groupOf } from '../dashboardHelpers.js';
+import { clientsOf, urgencyOf, countdown, byDueDate, GROUPS, groupOf, shortTime } from '../dashboardHelpers.js';
 import Sheet from './Sheet.jsx';
 import { DateBlock, SectionHead, rowKeys } from './ui.jsx';
 
@@ -65,15 +65,15 @@ function BidRow({ bid, onOpen, onStar, onMore }) {
   const days = daysUntil(bid.bid_date);
   const tone = urgencyOf(days).color;
   return (
-    <div className="m-row" role="button" tabIndex={0} onClick={() => onOpen(bid)} onKeyDown={rowKeys(() => onOpen(bid))} aria-label={`${bid.name}, ${countdown(days)}`}>
+    <div className="m-row compact" role="button" tabIndex={0} onClick={() => onOpen(bid)} onKeyDown={rowKeys(() => onOpen(bid))} aria-label={`${bid.name}, ${countdown(days)}`}>
       <DateBlock iso={bid.bid_date} tone={tone} />
       <div className="m-row-main">
-        <div className="m-row-title">{bid.name}</div>
-        <div className="m-row-sub"><span className="t">{clientsOf(bid).join(', ')}</span>{bid.user_notes && <StickyNote size={13} aria-label="Has notes" />}</div>
-        <div className="m-row-meta" style={{ '--tone': tone }}>
+        <div className="m-row-titleline"><span className="m-row-title">{bid.name}</span>{bid.user_notes && <StickyNote size={12} aria-label="Has notes" />}</div>
+        <div className="m-row-line" style={{ '--tone': tone }}>
           <span className="tone">{countdown(days)}</span>
-          {bid.bid_time && <span>{bid.bid_time}</span>}
+          {bid.bid_time && days >= 0 && <span>{shortTime(bid.bid_time)}</span>}   {/* an overdue bid's clock time no longer matters; the room goes to the client name */}
           {bid.bid_amount > 0 && <span>{fmt$(bid.bid_amount)}</span>}
+          <span className="t">{clientsOf(bid).join(', ')}</span>
         </div>
       </div>
       <div className="m-row-actions" onClick={(e) => e.stopPropagation()}>
