@@ -36,16 +36,18 @@ function Hero({ bids, onOpen }) {
   }
   const others = bids.filter((b) => b.id !== bid.id && daysUntil(b.bid_date) >= 0 && daysUntil(b.bid_date) <= 6).length;
   const preDays = bid.pre_bid ? daysUntil(bid.pre_bid) : null;
-  const detail = [clientsOf(bid).join(', '), hasTime ? bid.bid_time : null, bid.bid_amount > 0 ? `${fmt$(bid.bid_amount)} Bid` : null].filter(Boolean).join(' · ');
+  const detail = [fmtDate(bid.bid_date), hasTime ? shortTime(bid.bid_time) : null, bid.bid_amount > 0 ? `${fmt$(bid.bid_amount)} Bid` : null, clientsOf(bid).join(', ')].filter(Boolean).join(' · ');   // client last, so a long name is the part that gets cut
   const tone = urgencyOf(overdue || big === 'Time Passed' ? -1 : days).color;
   return (
-    <button type="button" className="m-hero contour" style={{ '--tone': tone }} onClick={() => onOpen(bid)} aria-haspopup="dialog">
-      <div className="m-eyebrow">{overdue ? 'Most Recent Past Due' : 'Next Deadline'}</div>
+    <button type="button" className="m-hero contour compact" style={{ '--tone': tone }} onClick={() => onOpen(bid)} aria-haspopup="dialog">
+      <div className="m-hero-top">
+        <span className="m-eyebrow">{overdue ? 'Most Recent Past Due' : 'Next Deadline'}</span>
+        {others > 0 && <span className="m-hero-more">{others} More Due in 7 Days</span>}
+      </div>
       <div className="m-hero-big"><span className="m-dot" aria-hidden="true" />{big}</div>
       <div className="m-hero-name">{bid.name}</div>
       {detail && <div className="m-hero-detail">{detail}</div>}
-      {bid.pre_bid && preDays >= 0 && <div className="m-hero-detail">Pre-Bid {fmtDate(bid.pre_bid)}{bid.pre_bid_time ? ` · ${bid.pre_bid_time}` : ''}</div>}
-      <div className="m-hero-detail" style={{ color: 'var(--muted)' }}>{fmtDate(bid.bid_date)}{others > 0 ? ` · ${others} More Due in the Next 7 Days` : ''}</div>
+      {bid.pre_bid && preDays >= 0 && <div className="m-hero-detail">Pre-Bid {fmtDate(bid.pre_bid)}{bid.pre_bid_time ? ` · ${shortTime(bid.pre_bid_time)}` : ''}</div>}
     </button>
   );
 }
@@ -54,8 +56,7 @@ function StatTile({ label, value, sub, tone }) {
   return (
     <div className="m-stat contour" style={tone ? { '--tone': tone } : undefined}>
       <div className="m-stat-label">{label}</div>
-      <div className="m-stat-num">{value}</div>
-      <div className="m-stat-sub">{sub}</div>
+      <div className="m-stat-row"><span className="m-stat-num">{value}</span><span className="m-stat-sub">{sub}</span></div>
     </div>
   );
 }
