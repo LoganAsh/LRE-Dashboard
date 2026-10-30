@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(process.env.SHOTS_DIR ? process.env.SHOTS_DIR + '/' : '/home/claude/shots/');
 const { default: chromium } = await import(require.resolve('@sparticuz/chromium'));
 const puppeteer = require('puppeteer-core');
-import { makeBids, makeProjects, makeTasks, makeWeekly, SYNC_LOG } from './mockdata.mjs';
+import { makeBids, makeProjects, makeTasks, makeWeekly, addTwins, SYNC_LOG } from './mockdata.mjs';
 
 export const PHONE = { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 export const DESKTOP = { width: 1440, height: 900, deviceScaleFactor: 1 };
@@ -14,7 +14,7 @@ export async function launch() {
   return puppeteer.launch({ args: [...chromium.args, '--no-sandbox'], executablePath: path, headless: 'shell' });
 }
 
-export function dataset() { return { bids: makeBids(), projects: makeProjects(), tasks: makeTasks(), weekly: makeWeekly() }; }
+export function dataset({ twins = false } = {}) { const bids = makeBids(); return { bids: twins ? addTwins(bids) : bids, projects: makeProjects(), tasks: makeTasks(), weekly: makeWeekly() }; }
 
 // Open a page that talks to the stand-in database. `tab` picks the starting tab; `dark` picks the theme.
 export async function openApp(browser, { url, viewport = PHONE, tab, dark = false, data = dataset(), extra = {}, freeze = true, initStorage = true, initScripts = [] }) {

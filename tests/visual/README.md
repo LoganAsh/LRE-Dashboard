@@ -7,8 +7,9 @@ One-time setup (kept out of the app's own dependencies):
 
 Then, from the repo root:
     sh tests/visual/serve.sh                                  # dev server on :5199
-    node tests/visual/phone.test.mjs                          # 47 behavior checks on the phone app
-    node tests/visual/shootAll.mjs --viewport desktop --out DIR [--url http://127.0.0.1:5198/]
+    node tests/unit/dedupeBids.test.mjs                       # logic checks for hiding duplicate bid rows (no browser needed)
+    node tests/visual/phone.test.mjs                          # behavior checks on the phone app
+    node tests/visual/shootAll.mjs --viewport desktop --out DIR [--url http://127.0.0.1:5198/] [--twins]   # --twins adds duplicate rows to the test data
     node tests/visual/desktopDialogs.mjs --out DIR            # the 7 pop-ups, on desktop
     python3 tests/visual/diff.py DIR_A DIR_B                  # pixel-compare two folders of screenshots
     node tests/visual/phoneShots.mjs OUT.png "Bid Log" [--dark] [--viewport] [--live]

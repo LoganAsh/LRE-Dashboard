@@ -53,6 +53,16 @@ export function makeTasks() {
 }
 // fixed at 11:40 today so screenshots are identical from run to run
 const syncAt = new Date(); syncAt.setHours(11, 40, 0, 0);
+// Adds exact twins to a bid list the way the real sync leaves them behind: same project, date, client and amount,
+// an older stale copy, often marked No Bid by hand. Used to prove the app shows each bid once.
+export function addTwins(bids) {
+  const out = [...bids]; let n = 0;
+  [2, 5, 8, 11, 14, 20, 27, 33].forEach((i, k) => {
+    const b = bids[i]; if (!b) return; n++;
+    out.push({ ...b, id: 900000 + n, source_row: (b.source_row || 100) + 1000, status_override: k % 2 === 0 ? 'No Bid' : null, effective_status: k % 2 === 0 ? 'No Bid' : b.effective_status, updated_at: '2026-09-21T18:00:00Z' });
+  });
+  return out;
+}
 export function makeWeekly() {
   const monday = () => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
   const iso = (d) => { const p = (x) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };

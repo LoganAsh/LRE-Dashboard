@@ -37,7 +37,7 @@ const TITLES = { 'Bid Dashboard': 'Dashboard' };
 const BAR_TABS = BAR.map((b) => b.tab);
 
 export default function MobileApp({
-  activeTab, setActiveTab, bids, loading, error, upcomingCount, lastSync, syncing, syncNote, handleSync,
+  activeTab, setActiveTab, bids, loading, error, upcomingCount, lastSync, duplicatesHidden, syncing, syncNote, handleSync,
   theme, setTheme, yearFilter, setYearFilter, typeFilter, setTypeFilter,
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -136,7 +136,7 @@ export default function MobileApp({
         </button>
         <button type="button" className="m-action" onClick={() => { setMoreOpen(false); handleSync(); }} disabled={syncing}>
           <RefreshCw strokeWidth={1.75} />
-          <span className="m-action-text">Sync Now<small>{lastSync ? `Last sync ${lastSync}` : 'Pulls the latest bid log'}</small></span>
+          <span className="m-action-text">Sync Now<small>{lastSync ? `Last sync ${lastSync}` : 'Pulls the latest bid log'}{duplicatesHidden > 0 ? ` · ${duplicatesHidden} Duplicate Rows Hidden` : ''}</small></span>
         </button>
       </Sheet>
     </div>

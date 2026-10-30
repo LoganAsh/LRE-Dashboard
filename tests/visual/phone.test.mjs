@@ -1,5 +1,5 @@
 // node tests/visual/phone.test.mjs   (needs the dev server on :5199 — run tests/visual/serve.sh first)
-import { launch, openApp, PHONE, DESKTOP } from './harness.mjs';
+import { launch, openApp, PHONE, DESKTOP, dataset } from './harness.mjs';
 const URL_ = 'http://127.0.0.1:5199/';
 let fails = 0; const ok = (c, l, x = '') => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}${x ? '  ' + x : ''}`); if (!c) fails++; };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -174,6 +174,26 @@ p = await open('Bid Dashboard');
 const head = await p.evaluate(async () => { const m = await (await fetch('/manifest.webmanifest')).json(); return { viewport: document.querySelector('meta[name=viewport]').content, manifest: !!document.querySelector('link[rel=manifest]'), apple: !!document.querySelector('link[rel=apple-touch-icon]'), standalone: document.querySelector('meta[name=apple-mobile-web-app-capable]')?.content, m }; });
 ok(/viewport-fit=cover/.test(head.viewport) && head.manifest && head.apple && head.standalone === 'yes' && head.m.display === 'standalone' && head.m.icons.length === 3 && head.m.start_url === '/', 'installable: manifest (standalone, 3 icons), apple icon and tags, edge-to-edge viewport');
 await p.close();
+
+// ── duplicate rows left behind by the sync are shown once, on every screen ──
+async function snapshot(twins) {
+  const data = dataset({ twins }); const out = {};
+  for (const tab of ['Bid Dashboard', 'Bid Log', 'Clients']) {
+    const pg = await open(tab, { data }); await sleep(600);
+    out[tab] = await pg.evaluate(() => [...document.querySelectorAll('.m-chip, .m-stat, .m-card .m-row')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()).join(' || '));
+    if (tab === 'Bid Dashboard') {
+      await clickText(pg, '.m-tab', 'More', { exact: true }); await pg.waitForFunction(() => document.querySelector('[role=dialog] .m-action[role=switch]'), { timeout: 10000 });
+      out.more = await pg.evaluate(() => [...document.querySelectorAll('[role=dialog] .m-action')].map((e) => e.textContent).find((t) => /Sync Now/.test(t)) || '');
+    }
+    await pg.close();
+  }
+  return out;
+}
+const clean = await snapshot(false), dup = await snapshot(true);
+ok(dup['Bid Log'] === clean['Bid Log'], 'Bid Log: with duplicate rows in the data, the counts and the list are exactly the same as without', `(${(dup['Bid Log'].match(/All (\d+)/) || [])[1]} bids)`);
+ok(dup['Clients'] === clean['Clients'], 'Clients: every client shows the same bid counts and volume with or without the duplicate rows');
+ok(dup['Bid Dashboard'] === clean['Bid Dashboard'], 'Dashboard: tiles and bid list are the same with or without the duplicate rows');
+ok(/8 Duplicate Rows Hidden/.test(dup.more) && !/Duplicate/.test(clean.more), 'the More menu says how many duplicate rows are hidden (and says nothing when there are none)', JSON.stringify(dup.more.slice(0, 80)));
 
 // ── 10. desktop untouched: the handle is hidden and nothing phone-specific shows ──
 p = await openApp(browser, { url: URL_, viewport: DESKTOP, tab: 'Bid Dashboard' });

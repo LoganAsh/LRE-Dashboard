@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabase.js';
+import { dedupeBids } from './dedupeBids.js';
 
 export function useBids() {
   const [bids, setBids] = useState([]);
   const [syncLog, setSyncLog] = useState(null);
+  const [duplicatesHidden, setDuplicatesHidden] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -12,12 +14,15 @@ export function useBids() {
     setError(null);
     try {
       // Fetch all bids
-      const { data, error: err } = await supabase
-        .from('lre_bids_view')
-        .select('*')
-        .order('bid_date', { ascending: false });
+      const [{ data, error: err }, withResults] = await Promise.all([
+        supabase.from('lre_bids_view').select('*').order('bid_date', { ascending: false }),
+        // which bids have bid results entered, so the copy carrying that work is the one that stays visible
+        supabase.from('lre_bid_placements').select('bid_id').then((r) => r, () => ({ data: null })),
+      ]);
       if (err) throw err;
-      setBids(data ?? []);
+      const { bids: unique, hidden } = dedupeBids(data ?? [], new Set((withResults?.data ?? []).map((p) => p.bid_id)));
+      setBids(unique);
+      setDuplicatesHidden(hidden);
 
       // Fetch last sync log entry
       const { data: log } = await supabase
@@ -37,7 +42,7 @@ export function useBids() {
     fetchBids();
   }, [fetchBids]);
 
-  return { bids, syncLog, loading, error, refetch: fetchBids };
+  return { bids, syncLog, duplicatesHidden, loading, error, refetch: fetchBids };
 }
 
 // Derived stats from bids array

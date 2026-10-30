@@ -117,7 +117,7 @@ export default function App() {
   const [typeFilter, setTypeFilter] = useState('All');
   const [syncing, setSyncing] = useState(false);
   const [syncNote, setSyncNote] = useState(() => readFlash());   // { text, tone: 'busy' | 'ok' | 'error' }
-  const { bids, syncLog, loading, error } = useBids();
+  const { bids, syncLog, duplicatesHidden, loading, error } = useBids();
   const isMobile = useIsMobile();     // phone-sized screen: the whole phone layout takes over; desktop is untouched
 
   // Same rule the Bid Dashboard uses for its "Upcoming Bids" list
@@ -180,7 +180,7 @@ export default function App() {
     return (
       <MobileApp
         activeTab={activeTab} setActiveTab={setActiveTab} bids={bids} loading={loading} error={error} upcomingCount={upcomingCount}
-        lastSync={lastSync} syncing={syncing} syncNote={syncNote} handleSync={handleSync} theme={theme} setTheme={setTheme}
+        lastSync={lastSync} duplicatesHidden={duplicatesHidden} syncing={syncing} syncNote={syncNote} handleSync={handleSync} theme={theme} setTheme={setTheme}
         yearFilter={yearFilter} setYearFilter={setYearFilter} typeFilter={typeFilter} setTypeFilter={setTypeFilter}
       />
     );
